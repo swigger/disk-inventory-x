@@ -230,7 +230,8 @@ NSString *OldItem = @"OldItem";
 - (BOOL) readFromFile: (NSString *) folder ofType: (NSString *) docType
 {
     //now the real work: loading the folder contents
-    NS_DURING
+    @try
+    {
 		_progressController = [[LoadingPanelController alloc] init];
 		[_progressController startAnimation];	
 		
@@ -249,13 +250,12 @@ NSString *OldItem = @"OldItem";
 		
 		[_rootItem setDelegate: self];
 		
-        //[_rootItem loadChilds];
         [_rootItem loadChildren];
         
  		uint64_t doneLoadingTime = getTime();
 		LOG (@"loading time:  %.2f seconds", subtractTime(doneLoadingTime, startTime));
 		
-       LOG(@"************** Loading complete *******************" );
+        LOG(@"************** Loading complete *******************" );
         LOG(@"%u items created", g_fileCount + g_folderCount );
         LOG(@"%u files", g_fileCount );
         LOG(@"%u folders", g_folderCount );
@@ -272,12 +272,14 @@ NSString *OldItem = @"OldItem";
 		//the modal session must be ended in the same NS_DURING section (if no exception occured)
 		[_progressController release];
 		_progressController = nil;
-		
-    NS_HANDLER
+    }
+    @catch(NSException *localException)
+    {
         LOG( @"exception '%@' occured during directory traversal: %@", [localException name], [localException reason] );
 		
-		//according to the docu, we don't need to end a modal session explicitly in the case of an exception
-		[_progressController closeNoModalEnd];
+		// according to the docu, we should not end a modal session explicitly in the case of an exception
+        // but this seems to be no longer true at least on Mac OS 10.13 (even not when using NS_DURING, NS_HANDLER, ..)
+		//[_progressController closeNoModalEnd];
 		[_progressController release];
 		_progressController = nil;
 		
@@ -295,12 +297,14 @@ NSString *OldItem = @"OldItem";
 			NSRunInformationalAlertPanel( NSLocalizedString( @"The folder's content could not be loaded.", @""), @"%@", nil, nil, nil, [localException reason]);
 		}
 		
-        NS_VALUERETURN( NO, BOOL );
-    NS_ENDHANDLER
-
-    [_directoryStack release];
-    _directoryStack = nil;
-	
+        return NO;
+    }
+    @finally
+    {
+        [_directoryStack release];
+        _directoryStack = nil;
+    }
+        
    return YES;
 }
 
@@ -334,16 +338,24 @@ NSString *OldItem = @"OldItem";
     show = (show == 0) ? NO : YES;
     if ( show == [[self viewOptions] showPackageContents] )
 		return;
-	
-	//remove all packages from kind statistic as they are now regarded differently (file<->folder)
-	[self removePackagesFromFileKindStatistic: nil]; 
-	
-	[[self viewOptions] setShowPackageContents: show];
-	
-	//re-add packages to statistic
-	[self addPackagesToFileKindStatistic: nil]; 	
-	
-	FSItem* selectedItem = [self selectedItem];
+    
+	// update kind statistics to reflect the chnage in view
+    {
+        //remove all packages from kind statistic as they are now regarded differently (file<->folder)
+        //[self removePackagesFromFileKindStatistic: nil];
+        
+        [[self viewOptions] setShowPackageContents: show];
+
+        // the methods "removePackagesFromFileKindStatistic" (was called above) and "addPackagesToFileKindStatistic" (was called below)
+        // do not work correctly in all cases
+        // so for now, we just rebuild the whole statictics which takes more time, but works
+        [self refreshFileKindStatistics];
+
+        //re-add packages to statistic
+        //[self addPackagesToFileKindStatistic: nil];
+    }
+    
+    FSItem* selectedItem = [self selectedItem];
 	
 	//invalidate current selection, as the selection might be an item in a package
 	//(if "show package content" is turned off, files in packages aren't visible any more)
@@ -1001,7 +1013,7 @@ NSString *OldItem = @"OldItem";
 	
 	if ( [self itemIsNode: item] )
 	{
-		//if the item is a folder, recurse through it's childs
+		//if the item is regarded as a folder, recurse through it's childs
 		unsigned i = [item childCount];
 		while ( i-- )
 			[self removePackagesFromFileKindStatistic: [item childAtIndex: i]];
@@ -1019,6 +1031,7 @@ NSString *OldItem = @"OldItem";
 	}
 }
 
+// !! does not work correctly in all cases (see comment in "setShowPackageContents")
 - (void) addPackagesToFileKindStatistic: (FSItem*) item
 {
 	BOOL bDoKVO = NO;
@@ -1031,7 +1044,7 @@ NSString *OldItem = @"OldItem";
 	
 	if ( [self itemIsNode: item] )
 	{
-		//if the item is a folder, recurse through it's childs
+		//if the item is regarded as a folder, recurse through it's childs
 		unsigned i = [item childCount];
 		while ( i-- )
 			[self addPackagesToFileKindStatistic: [item childAtIndex: i]];
@@ -1122,7 +1135,58 @@ withPreviousContent: (NSArray*) oldContent
 		[self addItemToFileKindStatistic: itemTrashed includingChilds: YES];
 	}
 		
-}	
+}
+
+//@@test
+- (void)canCloseDocumentWithDelegate:(id)delegate
+                 shouldCloseSelector:(nullable SEL)shouldCloseSelector
+                         contextInfo:(nullable void *)contextInfo
+{
+    @try
+    {
+        [super canCloseDocumentWithDelegate:delegate
+                        shouldCloseSelector:shouldCloseSelector
+                                contextInfo:contextInfo];
+    }
+    @catch (NSException *exception)
+    {
+        NSString *msg = [exception reason];
+        
+        NSLog(@"%@ exception catched: %@", [exception className], msg);
+        
+        
+        NSError *error = NULL;
+        NSRegularExpression *regex = [NSRegularExpression
+                                      regularExpressionWithPattern:@"0x([a-f]*\\d*)*(\\w|$)"
+                                      options:NSRegularExpressionCaseInsensitive
+                                      error:&error];
+        
+        [regex enumerateMatchesInString:msg
+                                options:NSMatchingReportCompletion
+                                  range:NSMakeRange(0, [msg length])
+                             usingBlock:^(NSTextCheckingResult *match, NSMatchingFlags flags, BOOL *stop)
+         {
+             for (NSUInteger i = 0; i < [match numberOfRanges]; i++)
+             {
+                 NSObject *obj = nil;
+                 NSString *objAddress = [msg substringWithRange:[match rangeAtIndex:i]];
+                 
+                 NSScanner* scanner = [NSScanner scannerWithString:objAddress];
+                 if ( [scanner scanHexLongLong:(unsigned long long*)&objAddress] )
+                 {
+                     NSLog(@"%@: %@", objAddress, [obj className]);
+                 }
+                 else
+                 {
+                     NSLog(@"'%@' could not be parsed as hex string", objAddress);
+                 }
+             }
+         }];
+        
+        @throw exception;
+    }
+}
+
 
 @end
 

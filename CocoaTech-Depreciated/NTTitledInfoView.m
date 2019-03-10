@@ -337,7 +337,7 @@
             viewRect.size.width = bounds.size.width;
             viewRect.origin.y += viewRect.size.height - 1;
             
-#if defined(__LP64__) && __LP64__
+#if defined(CGFLOAT_IS_DOUBLE) && CGFLOAT_IS_DOUBLE
             [_backgroundLineOffsets addObject:[NSNumber numberWithDouble:viewRect.origin.y]];
 #else
             [_backgroundLineOffsets addObject:[NSNumber numberWithFloat:viewRect.origin.y]];
@@ -395,7 +395,10 @@
     NSRect bounds = [self bounds];
     NSRect viewRect = bounds;
     int i, cnt;
+    
     NSColor *whiteLineColor = [[NSColor whiteColor] colorWithAlphaComponent:.7];
+    if (@available(macOS 10.14, *))
+        whiteLineColor = [NSColor separatorColor];
     
     // draw lines
     cnt = [_backgroundLineOffsets count];
@@ -420,7 +423,7 @@
     
     CGFloat lastLineHeight=12.0;
     if ([_backgroundLineOffsets count] > 2)
-#if defined(__LP64__) && __LP64__
+#if defined(CGFLOAT_IS_DOUBLE) && CGFLOAT_IS_DOUBLE
         lastLineHeight = [[_backgroundLineOffsets objectAtIndex:[_backgroundLineOffsets count]-1] doubleValue]
                        - [[_backgroundLineOffsets objectAtIndex:[_backgroundLineOffsets count]-2] doubleValue];
 #else

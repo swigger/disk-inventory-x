@@ -43,7 +43,8 @@
 */
 
 #import "ImageAndTextCell.h"
-#import <OmniAppKit/NSString-OAExtensions.h>
+//#import <OmniAppKit/NSString-OAExtensions.h>
+#import <OmniFoundation/NSString-OFUnicodeCharacters.h>
 
 #define TEXT_OFFSET	10	//space between image and text
 #define IMAGE_OFFSET	5	//space between left side of cell rect and image
@@ -112,14 +113,59 @@
 	
 }
 
++ (NSString *)stringByTruncatingToWidth:(CGFloat)width withFont:(NSFont *)font withString:(NSString *)string
+{
+    NSDictionary *attribs = @{ NSFontAttributeName : font };
+    
+    // Make sure string is longer than requested width
+    if ([string sizeWithAttributes:attribs].width > width)
+    {
+        NSString *ellipsis = [NSString horizontalEllipsisString];
+        
+       // Accommodate for ellipsis we’ll tack on the end
+        width -= [ellipsis sizeWithAttributes:attribs].width;
+        
+        if ( width < 0 )
+        {
+            // not enough space to show anything; just show "..."
+            return ellipsis;
+        }
+        else
+        {
+            // Create copy that will be the returned result
+            NSMutableString *truncatedString = [[string mutableCopy] autorelease];
+
+            // Get range for last character in string
+            NSRange range = {truncatedString.length - 1, 1};
+            
+            // Loop, deleting characters until string fits within width
+            while ( [truncatedString sizeWithAttributes:attribs].width > width
+                   && range.location > 0 )
+            {
+                // Delete character at end
+                [truncatedString deleteCharactersInRange:range];
+                
+                // Move back another character
+                range.location--;
+            }
+            
+            // Append ellipsis
+            [truncatedString replaceCharactersInRange:range withString:ellipsis];
+            
+            return truncatedString;
+        }
+    }
+    else
+        return string;
+}
+
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView
 {
     if (_image != nil)
 	{
-        NSSize	imageSize;
+        NSSize	imageSize = [_image size];
         NSRect	imageFrame;
 
-        imageSize = [_image size];
         NSDivideRect(cellFrame, &imageFrame, &cellFrame, TEXT_OFFSET + imageSize.width, NSMinXEdge);
         if ([self drawsBackground])
 		{
@@ -134,9 +180,21 @@
         else
             imageFrame.origin.y += ceil((cellFrame.size.height - imageFrame.size.height) / 2);
 
+//        [_image drawInRect: imageFrame
+//                   fromRect: NSZeroRect/*entire image*/
+//                  operation: NSCompositeSourceOver
+//                   fraction: 1.0/*opaque*/];
+        
         [_image compositeToPoint:imageFrame.origin operation:NSCompositeSourceOver];
     }
-	
+    
+    NSString *truncatedString = [ImageAndTextCell stringByTruncatingToWidth: NSWidth(cellFrame)
+                                                                       withFont: [self font]
+                                                                     withString: [self stringValue]];
+
+    [self setStringValue: truncatedString];
+
+/*
 	ThemeFontID themeFont = kThemeSystemFont;
 	float fontSize = [[self font] pointSize];
 	
@@ -147,12 +205,11 @@
 	else
 		LOG( @"ImageTextCell can't determine appropriate truncating method" );
 
-#pragma warning "code disabled"
-/*
     [self setStringValue: [[self stringValue] truncatedStringWithMaxWidth: NSWidth(cellFrame)
 															  themeFontID: themeFont
 														   truncationMode: truncEnd]];
-*/
+ */
+
     [super drawWithFrame:cellFrame inView:controlView];
 }
 

@@ -378,11 +378,11 @@
     }
     else if ( menuAction == @selector(zoomIn:) )
     {
-        return selectedItem != nil && [selectedItem isFolder];
+        return selectedItem != nil && [selectedItem isFolder] && ![_treeMapView zoomingInProgress];
     }
     else if ( menuAction == @selector(zoomOut:) )
     {
-        return [doc rootItem] != [doc zoomedItem];
+        return [doc rootItem] != [doc zoomedItem] && ![_treeMapView zoomingInProgress];
     }
     else if ( menuAction == @selector(showInFinder:)
 			  || menuAction == @selector(refresh:))

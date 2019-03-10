@@ -75,20 +75,36 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Disk Inventory X</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.2b1</string>
+	<string>1.2</string>
 	<key>CFBundleSignature</key>
 	<string>DIX </string>
 	<key>CFBundleVersion</key>
-	<string>1.2b1</string>
+	<string>1.2</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Disk Inventory X needs to access calendar files to inspect their sizes and other file attributes.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Disk Inventory X needs to access address book files to inspect their sizes and other file attributes.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Disk Inventory X needs to access photo libraries to inspect their sizes and other file attributes.</string>
 	<key>NSPrincipalClass</key>
 	<string>OAApplication</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>Disk Inventory X needs to access reminders to inspect their sizes and other file attributes.</string>
+	<key>NSSystemAdministrationUsageDescription</key>
+	<string>Disk Inventory X needs to access these files to inspect their sizes and other file attributes.</string>
+	<key>OFControllerClass</key>
+	<string>AppController</string>
 	<key>OFRegistrations</key>
 	<dict>
 		<key>NSUserDefaults</key>

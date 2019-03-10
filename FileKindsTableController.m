@@ -226,7 +226,7 @@
 	NSUserDefaultsController *sharedDefsController = [NSUserDefaultsController sharedUserDefaultsController];
 	[sharedDefsController removeObserver: self forKeyPath: [@"values." stringByAppendingString: UseSmallFontInKindStatistic]];
 	[sharedDefsController removeObserver: self forKeyPath: [@"values." stringByAppendingString: ShareKindColors]];
-
+    
 	[_kindsTableArrayController removeObserver: self forKeyPath: @"arrangedObjects"];
 	
     [[NSNotificationCenter defaultCenter] removeObserver: self];

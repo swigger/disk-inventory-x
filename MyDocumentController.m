@@ -12,6 +12,7 @@
 #import "PrefsPanelController.h"
 #import "FileSystemDoc.h"
 #import "DIXFinderCMInstaller.h"
+#import "AppController.h"
 
 //global variable which enables/disables logging
 BOOL g_EnableLogging;
@@ -111,6 +112,16 @@ BOOL g_EnableLogging;
 	}
 }
 
++ (void)restoreWindowWithIdentifier:(NSUserInterfaceItemIdentifier)identifier
+                              state:(NSCoder *)state
+                  completionHandler:(void (^)(NSWindow *, NSError *))completionHandler
+{
+    // prevent any window, which was open when quitting the app last time, to be re-opened now at the next lauch
+    // (see https://developer.apple.com/library/archive/documentation/DataManagement/Conceptual/DocBasedAppProgrammingGuideForOSX/StandardBehaviors/StandardBehaviors.html#//apple_ref/doc/uid/TP40011179-CH5-SW4
+    // Document-Based App Programming Guide for Mac/Core App Behaviors/Windows Are Restored Automatically)
+    completionHandler(nil, nil);
+}
+
 //Application's delegate; called if file from recent list is selected
 - (BOOL) application: (NSApplication*) theApp openFile: (NSString*) fileName
 {
@@ -158,9 +169,12 @@ BOOL g_EnableLogging;
 {
     //verify that our custom DocumentController is in use 
     NSAssert( [[NSDocumentController sharedDocumentController] isKindOfClass: [MyDocumentController class]], @"the shared DocumentController is not our custom class!" );
+    
+    //@@test
+    [[OAController sharedController] applicationWillFinishLaunching:notification];
 	
 	g_EnableLogging = [[NSUserDefaults standardUserDefaults] boolForKey: EnableLogging];
-	
+    
 	//show the drives panel before "applicationDidFinishLaunching" so the panel is visible before the first document is loaded
 	//(e.g. through drag&drop)
 	[[DrivesPanelController sharedController] showPanel];
@@ -168,7 +182,10 @@ BOOL g_EnableLogging;
 
 - (void) applicationDidFinishLaunching:(NSNotification *)notification
 {
-	//show donate message
+    //@@test
+    [[OAController sharedController] applicationDidFinishLaunching:notification];
+
+    //show donate message
 	if ( ![[NSUserDefaults standardUserDefaults] boolForKey: DontShowDonationMessage] )
 	{
 		[NSBundle loadNibNamed: @"DonationPanel" owner:self];

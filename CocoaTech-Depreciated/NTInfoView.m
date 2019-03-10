@@ -191,13 +191,17 @@
         [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Created:" table:@"preview"] info:[[_desc creationDate] dateString:kMediumDate relative:YES]]];
         */
         // now using NSDateFormatter (NTDateFormatter does not work on newer OS versions)
-        NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
- 
-        [infoPairs addObject:[NTTitledInfoPair infoPair: [NTLocalizedString localize:@"Modified:" table:@"preview"]
-                                                   info: [dateFormatter stringFromDate:[_desc modificationDate]]]];
-        [infoPairs addObject:[NTTitledInfoPair infoPair: [NTLocalizedString localize:@"Created:" table:@"preview"]
-                                                   info: [dateFormatter stringFromDate:[_desc creationDate]]]];
-
+        {
+            NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+            [dateFormatter setDateStyle:NSDateFormatterMediumStyle];
+            [dateFormatter setTimeStyle:NSDateFormatterMediumStyle];
+            [dateFormatter setLocale:[NSLocale currentLocale]];
+            
+            [infoPairs addObject:[NTTitledInfoPair infoPair: [NTLocalizedString localize:@"Modified:" table:@"preview"]
+                                                       info: [dateFormatter stringFromDate:[_desc modificationDate]]]];
+            [infoPairs addObject:[NTTitledInfoPair infoPair: [NTLocalizedString localize:@"Created:" table:@"preview"]
+                                                       info: [dateFormatter stringFromDate:[_desc creationDate]]]];
+        }
         
         [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Owner:" table:@"preview"] info:[_desc ownerName]]];
         [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Group:" table:@"preview"] info:[_desc groupName]]];

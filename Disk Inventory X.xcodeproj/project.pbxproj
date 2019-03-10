@@ -3,23 +3,23 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 50;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		8D15AC340486D014006FF6A4 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A7FEA54F5311CA2CBB /* Cocoa.framework */; };
+		FC2A428A2219C89900A484D7 /* AppController.m in Sources */ = {isa = PBXBuildFile; fileRef = FC2A42892219C89900A484D7 /* AppController.m */; };
 		FC2E58FF21D3BFDF00F6F03B /* Disk Inventory Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = FC2E58FE21D3BFDF00F6F03B /* Disk Inventory Icon.png */; };
 		FC2E590021D438F400F6F03B /* TreeMapView.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = FC715FFD217915BD00A07766 /* TreeMapView.framework */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		FC2E590121D438F400F6F03B /* OmniAppKit.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = FC715FF72179130D00A07766 /* OmniAppKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		FC2E590221D438F400F6F03B /* OmniBase.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = FC715FF52179130D00A07766 /* OmniBase.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		FC2E590321D438F400F6F03B /* OmniFoundation.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = FC715FF62179130D00A07766 /* OmniFoundation.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		FC2E590121D438F400F6F03B /* OmniAppKit.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = FC715FF72179130D00A07766 /* OmniAppKit.framework */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		FC2E590221D438F400F6F03B /* OmniBase.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = FC715FF52179130D00A07766 /* OmniBase.framework */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		FC2E590321D438F400F6F03B /* OmniFoundation.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = FC715FF62179130D00A07766 /* OmniFoundation.framework */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		FC4C4AC109802035004CCA22 /* Help in Resources */ = {isa = PBXBuildFile; fileRef = FC4C4ABF09802035004CCA22 /* Help */; };
-		FC4C4CA9098022D4004CCA22 /* Disk Inventory X Finder CM.plugin in CopyFiles */ = {isa = PBXBuildFile; fileRef = FC4C4CA50980229D004CCA22 /* Disk Inventory X Finder CM.plugin */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		FC4C4FF70981520A004CCA22 /* AppsForItem.m in Sources */ = {isa = PBXBuildFile; fileRef = FC4C4FF50981520A004CCA22 /* AppsForItem.m */; };
 		FC66DEA1107A43AB00F46D76 /* CocoatechFile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FC66DE9E107A43AB00F46D76 /* CocoatechFile.framework */; };
 		FC66DEA2107A43AB00F46D76 /* CocoaTechStrings.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FC66DE9F107A43AB00F46D76 /* CocoaTechStrings.framework */; };
-		FC66DF5C107A47D700F46D76 /* CocoatechFile.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = FC66DE9E107A43AB00F46D76 /* CocoatechFile.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		FC66DF5D107A47D700F46D76 /* CocoaTechStrings.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = FC66DE9F107A43AB00F46D76 /* CocoaTechStrings.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		FC66DF5C107A47D700F46D76 /* CocoatechFile.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = FC66DE9E107A43AB00F46D76 /* CocoatechFile.framework */; };
+		FC66DF5D107A47D700F46D76 /* CocoaTechStrings.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = FC66DE9F107A43AB00F46D76 /* CocoaTechStrings.framework */; };
 		FC715FF82179130E00A07766 /* OmniBase.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FC715FF52179130D00A07766 /* OmniBase.framework */; };
 		FC715FF92179130E00A07766 /* OmniFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FC715FF62179130D00A07766 /* OmniFoundation.framework */; };
 		FC715FFA2179130E00A07766 /* OmniAppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FC715FF72179130D00A07766 /* OmniAppKit.framework */; };
@@ -30,7 +30,7 @@
 		FC7F77D81067C9500090E839 /* NTTitledInfoView.m in Sources */ = {isa = PBXBuildFile; fileRef = FC7F77D61067C9500090E839 /* NTTitledInfoView.m */; };
 		FCCEC857107F734C00AEB282 /* DirectoryScanThread.m in Sources */ = {isa = PBXBuildFile; fileRef = FCCEC856107F734C00AEB282 /* DirectoryScanThread.m */; };
 		FCCEC8B1107F74BC00AEB282 /* CocoatechCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FCCEC8B0107F74BC00AEB282 /* CocoatechCore.framework */; };
-		FCCEC981107F7C9A00AEB282 /* CocoatechCore.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = FCCEC8B0107F74BC00AEB282 /* CocoatechCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		FCCEC981107F7C9A00AEB282 /* CocoatechCore.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = FCCEC8B0107F74BC00AEB282 /* CocoatechCore.framework */; };
 		FCCFB2AA097FA3FD009EA2B6 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = FCCFB2A9097FA3FD009EA2B6 /* main.m */; };
 		FCCFB303097FA42B009EA2B6 /* DIXTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = FCCFB2AD097FA42B009EA2B6 /* DIXTableView.m */; };
 		FCCFB304097FA42B009EA2B6 /* DIXOutlineView.m in Sources */ = {isa = PBXBuildFile; fileRef = FCCFB2AF097FA42B009EA2B6 /* DIXOutlineView.m */; };
@@ -121,16 +121,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		FC4C4CA7098022C9004CCA22 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 6;
-			files = (
-				FC4C4CA9098022D4004CCA22 /* Disk Inventory X Finder CM.plugin in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		FCED9ED9106ABB4D00667E44 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -155,10 +145,38 @@
 		2A37F4C5FDCFA73011CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		32DBCF750370BD2300C91783 /* Disk Inventory X_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Disk Inventory X_Prefix.pch"; sourceTree = "<group>"; };
 		8D15AC370486D014006FF6A4 /* Disk Inventory X.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Disk Inventory X.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FC2A42882219C89900A484D7 /* AppController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppController.h; sourceTree = "<group>"; };
+		FC2A42892219C89900A484D7 /* AppController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppController.m; sourceTree = "<group>"; };
+		FC2D7D7221FE4ABB004D0614 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/TreeMapPreferencesPage.nib; sourceTree = "<group>"; };
+		FC2D7D7321FE4ABB004D0614 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/GeneralPreferencesPage.nib; sourceTree = "<group>"; };
+		FC2D7D7421FE4ABB004D0614 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Preferences.strings; sourceTree = "<group>"; };
+		FC2D7D7521FE4ABB004D0614 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/DonationPanel.nib; sourceTree = "<group>"; };
+		FC2D7D7621FE4ABB004D0614 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/InfoPanel.nib; sourceTree = "<group>"; };
+		FC2D7D7721FE4ABB004D0614 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/LoadingPanel.nib; sourceTree = "<group>"; };
+		FC2D7D7821FE4ABB004D0614 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/MainMenu.nib; sourceTree = "<group>"; };
+		FC2D7D7921FE4ABB004D0614 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/TreeMap.nib; sourceTree = "<group>"; };
+		FC2D7D7A21FE4ABB004D0614 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/VolumesPanel.nib; sourceTree = "<group>"; };
+		FC2D7D7B21FE4ABB004D0614 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		FC2D7D7C21FE4ABB004D0614 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = de; path = de.lproj/Credits.rtf; sourceTree = "<group>"; };
+		FC2D7D7D21FE4ABC004D0614 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		FC2D7D7E21FE4ABC004D0614 /* de */ = {isa = PBXFileReference; lastKnownFileType = folder; name = de; path = de.lproj/Help; sourceTree = "<group>"; };
 		FC2DB78221AF4E1100F24C1E /* Disk Inventory X.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Disk Inventory X.entitlements"; sourceTree = "<group>"; };
 		FC2E58FE21D3BFDF00F6F03B /* Disk Inventory Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Disk Inventory Icon.png"; sourceTree = "<group>"; };
+		FC42B8622202405A0080570A /* es */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = es; path = es.lproj/TreeMapPreferencesPage.nib; sourceTree = "<group>"; };
+		FC42B8632202405A0080570A /* es */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = es; path = es.lproj/GeneralPreferencesPage.nib; sourceTree = "<group>"; };
+		FC42B8642202405A0080570A /* es */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = es; path = es.lproj/FinderCMPreferencesPage.nib; sourceTree = "<group>"; };
+		FC42B8652202405A0080570A /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Preferences.strings; sourceTree = "<group>"; };
+		FC42B8662202405A0080570A /* es */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = es; path = es.lproj/DonationPanel.nib; sourceTree = "<group>"; };
+		FC42B8672202405A0080570A /* es */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = es; path = es.lproj/InfoPanel.nib; sourceTree = "<group>"; };
+		FC42B8682202405A0080570A /* es */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = es; path = es.lproj/LoadingPanel.nib; sourceTree = "<group>"; };
+		FC42B8692202405A0080570A /* es */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = es; path = es.lproj/MainMenu.nib; sourceTree = "<group>"; };
+		FC42B86A2202405A0080570A /* es */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = es; path = es.lproj/TreeMap.nib; sourceTree = "<group>"; };
+		FC42B86B2202405A0080570A /* es */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = es; path = es.lproj/VolumesPanel.nib; sourceTree = "<group>"; };
+		FC42B86C2202405A0080570A /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		FC42B86D2202405A0080570A /* es */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = es; path = es.lproj/Credits.rtf; sourceTree = "<group>"; };
+		FC42B86E2202405A0080570A /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		FC42B86F2202405A0080570A /* es */ = {isa = PBXFileReference; lastKnownFileType = folder; name = es; path = es.lproj/Help; sourceTree = "<group>"; };
 		FC4C4AC009802035004CCA22 /* English */ = {isa = PBXFileReference; lastKnownFileType = folder; name = English; path = English.lproj/Help; sourceTree = "<group>"; };
-		FC4C4CA50980229D004CCA22 /* Disk Inventory X Finder CM.plugin */ = {isa = PBXFileReference; explicitFileType = "wrapper.plug-in"; name = "Disk Inventory X Finder CM.plugin"; path = "../../../../Disk Inventory X Finder CM/1.2/make/build/Debug/Disk Inventory X Finder CM.plugin"; sourceTree = SOURCE_ROOT; };
 		FC4C4FF40981520A004CCA22 /* AppsForItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppsForItem.h; sourceTree = "<group>"; };
 		FC4C4FF50981520A004CCA22 /* AppsForItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppsForItem.m; sourceTree = "<group>"; };
 		FC66DE9E107A43AB00F46D76 /* CocoatechFile.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CocoatechFile.framework; path = ../../../../PathFinder_4.8.5_SDK/build/Debug/CocoatechFile.framework; sourceTree = SOURCE_ROOT; };
@@ -178,6 +196,20 @@
 		FC7F77D61067C9500090E839 /* NTTitledInfoView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NTTitledInfoView.m; sourceTree = "<group>"; };
 		FC7F77F31067CA7D0090E839 /* NTID3Helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NTID3Helper.h; sourceTree = "<group>"; };
 		FC7F77F41067CA7D0090E839 /* NTID3Helper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NTID3Helper.m; sourceTree = "<group>"; };
+		FCA1D0BA2205FF2D004E9468 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/TreeMapPreferencesPage.nib; sourceTree = "<group>"; };
+		FCA1D0BB2205FF2D004E9468 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/GeneralPreferencesPage.nib; sourceTree = "<group>"; };
+		FCA1D0BC2205FF2D004E9468 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/FinderCMPreferencesPage.nib; sourceTree = "<group>"; };
+		FCA1D0BD2205FF2D004E9468 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Preferences.strings; sourceTree = "<group>"; };
+		FCA1D0BE2205FF2D004E9468 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/DonationPanel.nib; sourceTree = "<group>"; };
+		FCA1D0BF2205FF2D004E9468 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/InfoPanel.nib; sourceTree = "<group>"; };
+		FCA1D0C02205FF2D004E9468 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/LoadingPanel.nib; sourceTree = "<group>"; };
+		FCA1D0C12205FF2D004E9468 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/MainMenu.nib; sourceTree = "<group>"; };
+		FCA1D0C22205FF2D004E9468 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/TreeMap.nib; sourceTree = "<group>"; };
+		FCA1D0C32205FF2D004E9468 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/VolumesPanel.nib; sourceTree = "<group>"; };
+		FCA1D0C42205FF2D004E9468 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		FCA1D0C52205FF2D004E9468 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = fr; path = fr.lproj/Credits.rtf; sourceTree = "<group>"; };
+		FCA1D0C62205FF2D004E9468 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		FCA1D0C72205FF2D004E9468 /* fr */ = {isa = PBXFileReference; lastKnownFileType = folder; name = fr; path = fr.lproj/Help; sourceTree = "<group>"; };
 		FCCEC855107F734C00AEB282 /* DirectoryScanThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DirectoryScanThread.h; sourceTree = "<group>"; };
 		FCCEC856107F734C00AEB282 /* DirectoryScanThread.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DirectoryScanThread.m; sourceTree = "<group>"; };
 		FCCEC8B0107F74BC00AEB282 /* CocoatechCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CocoatechCore.framework; path = /Users/Doom/Dev/PathFinder_4.8.5_SDK/build/Debug/CocoatechCore.framework; sourceTree = "<absolute>"; };
@@ -293,6 +325,7 @@
 		FCD71DB50984141E00590D16 /* feature suggestions.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = "feature suggestions.txt"; path = "documentation/feature suggestions.txt"; sourceTree = "<group>"; };
 		FCD71DB60984141E00590D16 /* known bugs.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = "known bugs.txt"; path = "documentation/known bugs.txt"; sourceTree = "<group>"; };
 		FCD71DB70984141E00590D16 /* release notes.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = "release notes.txt"; path = "documentation/release notes.txt"; sourceTree = "<group>"; };
+		FCEEFC0421FE5B6700E9785E /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/FinderCMPreferencesPage.nib; sourceTree = "<group>"; };
 		FCF20A1B10666E8C005312DC /* Needed changes for CocoaTech Frameworks 4.8-5.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = "Needed changes for CocoaTech Frameworks 4.8-5.rtf"; path = "documentation/Needed changes for CocoaTech Frameworks 4.8-5.rtf"; sourceTree = "<group>"; };
 		FCFB17B521B876A400E3F8C4 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "Disk Inventory X/Images.xcassets"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -366,7 +399,6 @@
 				2A37F4C3FDCFA73011CA2CEA /* Frameworks */,
 				FCEE299D106266CB00B16DBB /* Project References */,
 				19C28FB0FE9D524F11CA2CBB /* Products */,
-				FC4C4CA50980229D004CCA22 /* Disk Inventory X Finder CM.plugin */,
 			);
 			name = "Disk Inventory X";
 			sourceTree = "<group>";
@@ -613,6 +645,8 @@
 				FCCFB2F6097FA42B009EA2B6 /* LoadingPanelController.m */,
 				FCCFB2F7097FA42B009EA2B6 /* FSItem-Utilities.h */,
 				FCCFB2F8097FA42B009EA2B6 /* FSItem-Utilities.m */,
+				FC2A42882219C89900A484D7 /* AppController.h */,
+				FC2A42892219C89900A484D7 /* AppController.m */,
 				FCCFB2F9097FA42B009EA2B6 /* MyDocumentController.m */,
 				FCCFB2FA097FA42B009EA2B6 /* MyDocumentController.h */,
 				FCD5DAFB09CDD4260051C1CF /* MainWindow.h */,
@@ -692,7 +726,6 @@
 				8D15AC300486D014006FF6A4 /* Sources */,
 				8D15AC330486D014006FF6A4 /* Frameworks */,
 				FC4C4C740980221D004CCA22 /* ShellScript */,
-				FC4C4CA7098022C9004CCA22 /* CopyFiles */,
 				FCED9ED9106ABB4D00667E44 /* CopyFiles */,
 			);
 			buildRules = (
@@ -717,6 +750,9 @@
 					8D15AC270486D014006FF6A4 = {
 						DevelopmentTeam = 65J464P6J4;
 						SystemCapabilities = {
+							com.apple.HardenedRuntime = {
+								enabled = 0;
+							};
 							com.apple.Sandbox = {
 								enabled = 0;
 							};
@@ -725,11 +761,14 @@
 				};
 			};
 			buildConfigurationList = C05733CB08A9546B00998B17 /* Build configuration list for PBXProject "Disk Inventory X" */;
-			compatibilityVersion = "Xcode 3.2";
+			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				en,
+				de,
+				es,
+				fr,
 			);
 			mainGroup = 2A37F4AAFDCFA73011CA2CEA /* Disk Inventory X */;
 			projectDirPath = "";
@@ -810,7 +849,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ $BUILD_STYLE = \"Release-XXX\" ]\nthen\n\n# delete existing frameworks\n# rm -rf \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/\"\n# md \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH\"\n\n# copy frameworks\n# OmniGroup frameworks\ncd \"$SRCROOT/../../../../OmniFrameworks_2005-11-18/Products/$BUILD_STYLE/\"\ncp -Rf *.framework \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/\"\n\n# CocoaTech frameworks\ncd \"$SRCROOT/../../../../CocoaTechOpenSource3.2/Frameworks/build/$BUILD_STYLE/\"\ncp -Rf *.framework \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/\"\n\n# TreemapView framework\ncd \"$SRCROOT/../../../../TreeMapView/vdev/make/build/$BUILD_STYLE/\"\ncp -Rf *.framework \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/\"\n\n# delete framework's header files\necho \"Deleting PrivateHeaders (files, dirs and links) from \\\"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}\\\"...\"\n\nfind \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH\" -type d -name Headers -print0 | xargs -0 rm -rf\nfind \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH\" -type d -name PrivateHeaders -print0 | xargs -0 rm -rf\n\nfi\n";
+			shellScript = "if [ $BUILD_STYLE = \"Release\" ]\nthen\n\n# delete framework's header files\necho \"Deleting PrivateHeaders (files, dirs and links) from \\\"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}\\\"...\"\n\nfind \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH\" -type d -name Headers -print0 | xargs -0 rm -rf\nfind \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH\" -type d -name PrivateHeaders -print0 | xargs -0 rm -rf\n\n# delete ad-hoc code signature (I have no Apple ID yet)\necho \"deleting ad-hoc code signature from \\\"${TARGET_BUILD_DIR}\\\"...\"\n\nfind \"$TARGET_BUILD_DIR\" -type d -name _CodeSignature -print0 | xargs -0 rm -rf\n\n\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -846,6 +885,7 @@
 				FCCFB31A097FA42B009EA2B6 /* DrivesPanelController.m in Sources */,
 				FCCFB31B097FA42B009EA2B6 /* VolumeNameTransformer.m in Sources */,
 				FCCFB31C097FA42B009EA2B6 /* VolumeUsageTransformer.m in Sources */,
+				FC2A428A2219C89900A484D7 /* AppController.m in Sources */,
 				FCCFB31D097FA42B009EA2B6 /* TreeMapViewController.m in Sources */,
 				FCCFB31E097FA42B009EA2B6 /* FileKindsTableController.m in Sources */,
 				FCCFB31F097FA42B009EA2B6 /* FilesOutlineViewController.m in Sources */,
@@ -883,6 +923,9 @@
 			isa = PBXVariantGroup;
 			children = (
 				FC4C4AC009802035004CCA22 /* English */,
+				FC2D7D7E21FE4ABC004D0614 /* de */,
+				FC42B86F2202405A0080570A /* es */,
+				FCA1D0C72205FF2D004E9468 /* fr */,
 			);
 			name = Help;
 			sourceTree = SOURCE_ROOT;
@@ -891,6 +934,9 @@
 			isa = PBXVariantGroup;
 			children = (
 				FCCFB34E097FA4C1009EA2B6 /* English */,
+				FC2D7D7C21FE4ABB004D0614 /* de */,
+				FC42B86D2202405A0080570A /* es */,
+				FCA1D0C52205FF2D004E9468 /* fr */,
 			);
 			name = Credits.rtf;
 			sourceTree = "<group>";
@@ -899,6 +945,9 @@
 			isa = PBXVariantGroup;
 			children = (
 				FCCFB350097FA4C1009EA2B6 /* English */,
+				FC2D7D7521FE4ABB004D0614 /* de */,
+				FC42B8662202405A0080570A /* es */,
+				FCA1D0BE2205FF2D004E9468 /* fr */,
 			);
 			name = DonationPanel.nib;
 			sourceTree = "<group>";
@@ -907,6 +956,9 @@
 			isa = PBXVariantGroup;
 			children = (
 				FCCFB352097FA4C1009EA2B6 /* English */,
+				FCEEFC0421FE5B6700E9785E /* de */,
+				FC42B8642202405A0080570A /* es */,
+				FCA1D0BC2205FF2D004E9468 /* fr */,
 			);
 			name = FinderCMPreferencesPage.nib;
 			sourceTree = "<group>";
@@ -915,6 +967,9 @@
 			isa = PBXVariantGroup;
 			children = (
 				FCCFB354097FA4C1009EA2B6 /* English */,
+				FC2D7D7321FE4ABB004D0614 /* de */,
+				FC42B8632202405A0080570A /* es */,
+				FCA1D0BB2205FF2D004E9468 /* fr */,
 			);
 			name = GeneralPreferencesPage.nib;
 			sourceTree = "<group>";
@@ -923,6 +978,9 @@
 			isa = PBXVariantGroup;
 			children = (
 				FCCFB35F097FA4C1009EA2B6 /* English */,
+				FC2D7D7621FE4ABB004D0614 /* de */,
+				FC42B8672202405A0080570A /* es */,
+				FCA1D0BF2205FF2D004E9468 /* fr */,
 			);
 			name = InfoPanel.nib;
 			sourceTree = "<group>";
@@ -931,6 +989,9 @@
 			isa = PBXVariantGroup;
 			children = (
 				FCCFB361097FA4C1009EA2B6 /* English */,
+				FC2D7D7D21FE4ABC004D0614 /* de */,
+				FC42B86E2202405A0080570A /* es */,
+				FCA1D0C62205FF2D004E9468 /* fr */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
@@ -939,6 +1000,9 @@
 			isa = PBXVariantGroup;
 			children = (
 				FCCFB363097FA4C1009EA2B6 /* English */,
+				FC2D7D7721FE4ABB004D0614 /* de */,
+				FC42B8682202405A0080570A /* es */,
+				FCA1D0C02205FF2D004E9468 /* fr */,
 			);
 			name = LoadingPanel.nib;
 			sourceTree = "<group>";
@@ -947,6 +1011,9 @@
 			isa = PBXVariantGroup;
 			children = (
 				FCCFB365097FA4C1009EA2B6 /* English */,
+				FC2D7D7B21FE4ABB004D0614 /* de */,
+				FC42B86C2202405A0080570A /* es */,
+				FCA1D0C42205FF2D004E9468 /* fr */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -955,6 +1022,9 @@
 			isa = PBXVariantGroup;
 			children = (
 				FCCFB367097FA4C1009EA2B6 /* English */,
+				FC2D7D7821FE4ABB004D0614 /* de */,
+				FC42B8692202405A0080570A /* es */,
+				FCA1D0C12205FF2D004E9468 /* fr */,
 			);
 			name = MainMenu.nib;
 			sourceTree = "<group>";
@@ -963,6 +1033,9 @@
 			isa = PBXVariantGroup;
 			children = (
 				FCCFB369097FA4C1009EA2B6 /* English */,
+				FC2D7D7421FE4ABB004D0614 /* de */,
+				FC42B8652202405A0080570A /* es */,
+				FCA1D0BD2205FF2D004E9468 /* fr */,
 			);
 			name = Preferences.strings;
 			sourceTree = "<group>";
@@ -971,6 +1044,9 @@
 			isa = PBXVariantGroup;
 			children = (
 				FCCFB36B097FA4C1009EA2B6 /* English */,
+				FC2D7D7921FE4ABB004D0614 /* de */,
+				FC42B86A2202405A0080570A /* es */,
+				FCA1D0C22205FF2D004E9468 /* fr */,
 			);
 			name = TreeMap.nib;
 			sourceTree = "<group>";
@@ -979,6 +1055,9 @@
 			isa = PBXVariantGroup;
 			children = (
 				FCCFB36D097FA4C1009EA2B6 /* English */,
+				FC2D7D7221FE4ABB004D0614 /* de */,
+				FC42B8622202405A0080570A /* es */,
+				FCA1D0BA2205FF2D004E9468 /* fr */,
 			);
 			name = TreeMapPreferencesPage.nib;
 			sourceTree = "<group>";
@@ -987,6 +1066,9 @@
 			isa = PBXVariantGroup;
 			children = (
 				FCCFB36F097FA4C1009EA2B6 /* English */,
+				FC2D7D7A21FE4ABB004D0614 /* de */,
+				FC42B86B2202405A0080570A /* es */,
+				FCA1D0C32205FF2D004E9468 /* fr */,
 			);
 			name = VolumesPanel.nib;
 			sourceTree = "<group>";
@@ -1000,26 +1082,26 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 65J464P6J4;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(FRAMEWORK_SEARCH_PATHS)",
-					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
-					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_2)",
-					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_3)",
-					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_5)",
+					"$(FRAMEWORK_SEARCH_PATHS_COCOATECH)",
+					"$(FRAMEWORK_SEARCH_PATHS_OMNI)",
+					"$(FRAMEWORK_SEARCH_PATHS_TREEMAP)",
 				);
-				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../../PathFinder_4.8.5_SDK/build/Debug\"";
-				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../../../../OmniFrameworks_2018-09-22/Build/Products/Debug\"";
-				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_3 = "\"$(SRCROOT)/../../../../TreeMapView/vdev/make/Build/Products/Debug\"";
-				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_5 = "\"$(SRCROOT)/../../../CocoaTechOpenSource3.2/Frameworks/build/Debug\"";
+				FRAMEWORK_SEARCH_PATHS_COCOATECH = "\"$(SRCROOT)/../../../../PathFinder_4.8.5_SDK/build/Debug\"";
+				FRAMEWORK_SEARCH_PATHS_OMNI = "\"$(SRCROOT)/../../../../OmniFrameworks_2018-09-22/Build/Products/Debug\"";
+				FRAMEWORK_SEARCH_PATHS_TREEMAP = "\"$(SRCROOT)/../../../../TreeMapView/vdev/make/Build/Products/Debug\"";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_VERSION = "";
 				INFOPLIST_FILE = Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.derlien.DiskInventoryX;
 				PRODUCT_NAME = "Disk Inventory X";
@@ -1038,24 +1120,24 @@
 				CODE_SIGN_IDENTITY = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(FRAMEWORK_SEARCH_PATHS)",
-					"\"$(SRCROOT)/../../../../PathFinder_4.8.5_SDK/build/Debug\"",
-					"\"$(SRCROOT)/../../../../OmniFrameworks_2018-09-22/Build/Products/Debug\"",
-					"\"$(SRCROOT)/../../../../TreeMapView/vdev/make/Build/Products/Debug\"",
-					"\"$(SRCROOT)/../../../CocoaTechOpenSource3.2/Frameworks/build/Debug\"",
+					"$(FRAMEWORK_SEARCH_PATHS_COCOATECH)",
+					"$(FRAMEWORK_SEARCH_PATHS_OMNI)",
+					"$(FRAMEWORK_SEARCH_PATHS_TREEMAP)",
 				);
-				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../../PathFinder_4.8.5_SDK/build/Release\"";
-				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_2 = "\"$(SRCROOT)/../../../../OmniFrameworks_2018-09-22/Build/Products/Release\"";
-				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_3 = "\"$(SRCROOT)/../../../../TreeMapView/vdev/make/Build/Products/Release\"";
-				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_5 = "\"$(SRCROOT)/../../../CocoaTechOpenSource3.2/Frameworks/build/Releease\"";
+				FRAMEWORK_SEARCH_PATHS_COCOATECH = "\"$(SRCROOT)/../../../../PathFinder_4.8.5_SDK/build/Release\"";
+				FRAMEWORK_SEARCH_PATHS_OMNI = "\"$(SRCROOT)/../../../../OmniFrameworks_2018-09-22/Build/Products/Debug\"";
+				FRAMEWORK_SEARCH_PATHS_TREEMAP = "\"$(SRCROOT)/../../../../TreeMapView/vdev/make/Build/Release\"";
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				GCC_PREPROCESSOR_DEFINITIONS = "NS_BLOCK_ASSERTIONS=1";
+				GCC_PREPROCESSOR_DEFINITIONS = "";
 				GCC_VERSION = "";
 				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = "$(HOME)/Applications";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.derlien.DiskInventoryX;
 				PRODUCT_NAME = "Disk Inventory X";
 				SDKROOT = macosx;
@@ -1067,6 +1149,7 @@
 		C05733CC08A9546B00998B17 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				ENABLE_TESTABILITY = YES;
 				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -1074,7 +1157,7 @@
 				GCC_VERSION = 4.0;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 				SHARED_PRECOMPS_DIR = "$(PROJECT_TEMP_DIR)/SharedPrecompiledHeaders";
@@ -1084,12 +1167,13 @@
 		C05733CD08A9546B00998B17 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Disk Inventory X_Prefix.pch";
 				GCC_VERSION = 4.0;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				SDKROOT = macosx;
 				SHARED_PRECOMPS_DIR = "$(PROJECT_TEMP_DIR)/SharedPrecompiledHeaders";
 			};

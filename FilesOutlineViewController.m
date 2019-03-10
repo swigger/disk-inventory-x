@@ -67,13 +67,7 @@
 	
 	//set small font for all for all columns if needed
 	[self setOutlineViewFont];
-	
-#if MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_3
-	[_outlineView setAutoresizesAllColumnsToFit: YES];
-#else
-	[_outlineView setColumnAutoresizingStyle: NSTableViewFirstColumnOnlyAutoresizingStyle];	
-#endif
-    
+     
     [self reloadData];
 }
 

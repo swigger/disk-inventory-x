@@ -1,6 +1,22 @@
 release notes
 =============
 
+1.2 (2019-02-28)
+----------------
+new:
+- please note that macOS 10.13 or later is required
+- new application icon thanks to Anton Repponen
+- tree map: the rendering is done in full resolution on Retina displays
+- German, French and Spanish localization
+
+bug fix:
+- file outline view (left side):
+  - the initial column widths are not quite optional (manual resizing needed)
+  - file names show end ellipsis when the column is not wide enough to shw the full name
+
+- various small bug fixes and improvements
+
+
 1.2 beta 1 (2018-12-27)
 ------------------------
 
@@ -18,9 +34,9 @@ bug fix:
 
 known bugs/problems:
 - folders which are loaded when the application is closed are reloaded next time the app is launched
-- In dark mode, the edges of the drawers (kind statistic, selection list) are shown in the light color. Apple has declared drawers as depreciated and it seems Apple does not dark mode for drawers (this is just a visual flaw; they still work as expected).
+- In dark mode, the edges of the drawers (kind statistic, selection list) are shown in the light color. Apple has declared drawers as depreciated and it seems Apple has not implemented the dark mode for drawers (this is just a visual flaw; they still work as expected).
 - tree map: the rendering does not use the native resolution on Retina displays resulting in a kind of blurry tree map
-- outline view (left side):
+- file outline view (left side):
   - the initial column widths are not quite optional (manual resizing needed) 
   - file names are not nicely truncated (showing the usual end ellipses) to fit the column width; they are just truncated at the right side of the column
 

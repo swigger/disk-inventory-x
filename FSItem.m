@@ -290,6 +290,7 @@ static struct _BulkCatalogInfoRec {
 	if ( icon == nil )
 	{
 		icon = [[self fileDesc] iconImageWithSize: iconSize];
+        //icon = [[NSWorkspace sharedWorkspace] iconForFile:[[self fileDesc] path]];
 		
 		if ( icon == nil )
 			icon = (id) [NSNull null];
@@ -1061,7 +1062,7 @@ static struct _BulkCatalogInfoRec {
 	{
 		FSItem *child = [_childs objectAtIndex: i];
 		NTFileDesc *childDesc = [child fileDesc];
-		
+        
 		if ( [childDesc isDirectory] && ![childDesc isVolume] )
 		{
 			[child loadChildrenAndSetKindStrings: setKindStrings

@@ -136,7 +136,7 @@ writeRowsWithIndexes:(NSIndexSet *)rowIndexes
 	[[self document] removeObserver: self forKeyPath: DocKeySelectedItem];
 	
 	[[NSUserDefaultsController sharedUserDefaultsController] removeObserver: self forKeyPath: [@"values." stringByAppendingString: UseSmallFontInSelectionList]];
-	
+    
 	[_selectionListArrayController removeObserver: self forKeyPath: @"selection"];
 
 	[[NSNotificationCenter defaultCenter] removeObserver: self];
