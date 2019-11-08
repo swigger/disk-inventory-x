@@ -21,18 +21,20 @@ typedef enum
 } FSItemType;
 
 @interface FSItem : NSObject {
-	NTFileDesc *_fileDesc;
+	NSURL *_fileURL;
     FSItem *_parent;	//only valid for non-root items
 	NSMutableDictionary *_icons; //holds icons in various sizes (see iconWithSize:)
 	FSItemType _type;
     NSNumber *_size;
 	UInt64 _sizeValue;
+    NSString *_kindName;
     //unsigned _hash;
-    NSMutableArray *_childs;
+    NSMutableArray<FSItem*> *_childs;
 	id _delegate;
 }
 
 - (id) initWithPath: (NSString *) path;
+- (id) initWithURL: (NSURL *) url;
 
 - (id) initAsOtherSpaceItemForParent: (FSItem*) parent;
 - (id) initAsFreeSpaceItemForParent: (FSItem*) parent;
@@ -43,10 +45,10 @@ typedef enum
 - (FSItemType) type;
 - (BOOL) isSpecialItem;
 
-- (NTFileDesc *) fileDesc;
-- (void) setFileDesc: (NTFileDesc*) desc;
+- (NSURL *) fileURL;
+- (void) setFileURL: (NSURL*) url;
 
-- (void) loadChildren; //optimized version by Dave Payne
+- (void) loadChildren;
 
 - (NSString *) description;
 
@@ -74,7 +76,7 @@ typedef enum
 	//just recalculates size (no file system access)
 
 - (void) setKindString; //will ask delegate whether to ignore creator codes
-- (void) setKindStringIgnoringCreatorCode: (BOOL) ignoreCreatorCode includeChilds: (BOOL) includeChilds;
+- (void) setKindStringIncludingChildren: (BOOL) includingChildren;
 
 - (NSNumber*) size;
 - (unsigned long long) sizeValue;
@@ -91,7 +93,7 @@ typedef enum
 - (NSComparisonResult) compareSize: (FSItem*) other;
 - (NSComparisonResult) compareDisplayName: (FSItem*) other;
 
-- (NSArray*) supportedPasteboardTypes;
+- (NSArray<NSPasteboardType>*) supportedPasteboardTypes;
 - (BOOL) supportsPasteboardType: (NSString*) type;
 - (void) writeToPasteboard: (NSPasteboard*) pasteboard;
 - (void) writeToPasteboard: (NSPasteboard*) pasteboard withTypes: (NSArray*) types;

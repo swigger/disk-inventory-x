@@ -1,0 +1,4 @@
+- Info panel: modification date (NSURL in, NTFileDesc out)
+- memory usage  (NSURL keys?)
+- wrong free space for system volume container (NSURL in, NTVolume out?)
+

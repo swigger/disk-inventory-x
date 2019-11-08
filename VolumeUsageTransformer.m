@@ -7,6 +7,7 @@
 //
 
 #import "VolumeUsageTransformer.h"
+#import "NSURL-Extensions.h"
 
 
 @implementation VolumeUsageTransformer
@@ -34,19 +35,28 @@
 
 - (id)transformedValue:(id)value 
 {
-	if ( value == nil )
+    if ( value == nil )
 		return nil;
 	
-	//get values as NSNumbers
-	NSNumber *numCapacity = [value valueForKey: @"totalBytes"];
-	NSNumber *numFree = [value valueForKey: @"freeBytes"];
-	NSNumber *numUsed = [NSNumber numberWithUnsignedLongLong:
-							[numCapacity unsignedLongLongValue] - [numFree unsignedLongLongValue]];
-	
-	//convert values to formatted strings
-	NSString *strCapacity = [_sizeFormatter stringForObjectValue: numCapacity];
-	NSString *strFree = [_sizeFormatter stringForObjectValue: numFree];
-	NSString *strUsed = [_sizeFormatter stringForObjectValue: numUsed];
+    NSString *strCapacity = @"n/a";
+    NSString *strFree = @"n/a";
+    NSString *strUsed = @"n/a";
+    
+    NSURL *volume = (NSURL*)value;
+
+    if ( [volume getCachedBoolValue: NSURLVolumeSupportsVolumeSizesKey] )
+    {
+        //get values as NSNumbers
+        NSNumber *numCapacity = [volume cachedVolumeTotalCapacity];
+        NSNumber *numFree = [volume cachedVolumeAvailableCapacity];
+        NSNumber *numUsed = [NSNumber numberWithUnsignedLongLong:
+                                [numCapacity unsignedLongLongValue] - [numFree unsignedLongLongValue]];
+        
+        //convert values to formatted strings
+        strCapacity = [_sizeFormatter stringForObjectValue: numCapacity];
+        strFree = [_sizeFormatter stringForObjectValue: numFree];
+        strUsed = [_sizeFormatter stringForObjectValue: numUsed];
+    }
 	
 	//create display strings from formatted values
 	NSString *capacityField = [NSString stringWithFormat: @"%@: %@", NSLocalizedString(@"Capacity",@""), strCapacity];

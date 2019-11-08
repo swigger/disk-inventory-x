@@ -79,19 +79,20 @@
 {
 	[self showPanel];
 	
-	if ( fsItem == nil )
+	if ( fsItem == nil || [fsItem fileURL] == nil)
 	{
 		[_displayNameTextField setStringValue: @""];
 		[_iconImageView setImage: nil];
 
-		[_infoView setDesc: nil];
+		[_infoView setURL: nil];
 	}
-	else if ( [fsItem fileDesc] != [_infoView desc] )
+	else if ( [_infoView URL] == nil
+             || ![[fsItem fileURL] isEqualToURL: [_infoView URL]] )
 	{
 		[_displayNameTextField setStringValue: [fsItem displayName]];
 		[_iconImageView setImage: [fsItem iconWithSize: 32]];
-			
-		[_infoView setDesc: [fsItem fileDesc]];
+        
+        [_infoView setURL: [fsItem fileURL]];
 	}
 }
 

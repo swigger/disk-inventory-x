@@ -161,17 +161,19 @@
 
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView
 {
-    if (_image != nil)
-	{
-        NSSize	imageSize = [_image size];
-        NSRect	imageFrame;
+    //row height for default font is 17 pixels, so subtract 1
+    NSSize	imageSize = (_image == nil) ? [_image size] : NSMakeSize(16, 16);
+    NSRect	imageFrame;
 
-        NSDivideRect(cellFrame, &imageFrame, &cellFrame, TEXT_OFFSET + imageSize.width, NSMinXEdge);
-        if ([self drawsBackground])
-		{
-            [[self backgroundColor] set];
-            NSRectFill(imageFrame);
-        }
+    NSDivideRect(cellFrame, &imageFrame, &cellFrame, TEXT_OFFSET + imageSize.width, NSMinXEdge);
+    if ([self drawsBackground])
+    {
+        [[self backgroundColor] set];
+        NSRectFill(imageFrame);
+    }
+
+    if (_image != nil)
+    {
         imageFrame.origin.x += IMAGE_OFFSET;
         imageFrame.size = imageSize;
 
@@ -180,12 +182,14 @@
         else
             imageFrame.origin.y += ceil((cellFrame.size.height - imageFrame.size.height) / 2);
 
-//        [_image drawInRect: imageFrame
-//                   fromRect: NSZeroRect/*entire image*/
-//                  operation: NSCompositeSourceOver
-//                   fraction: 1.0/*opaque*/];
-        
-        [_image compositeToPoint:imageFrame.origin operation:NSCompositeSourceOver];
+       //[_image drawInRect: imageFrame
+       //          fromRect: NSZeroRect/*entire image*/
+       //         operation: NSCompositeSourceOver
+       //          fraction: 1.0/*opaque*/
+       //    respectFlipped: YES
+       //             hints: nil];
+       
+       [_image compositeToPoint:imageFrame.origin operation:NSCompositeSourceOver];
     }
     
     NSString *truncatedString = [ImageAndTextCell stringByTruncatingToWidth: NSWidth(cellFrame)

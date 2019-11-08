@@ -68,11 +68,11 @@
 //@@test
 - (NSCell*) preparedCellAtColumn: (NSInteger) col row: (NSInteger) row
 {
-    @try
+ //   @try
     {
         return [super preparedCellAtColumn:col row:row];
     }
-    @catch (NSException *exception)
+/*    @catch (NSException *exception)
     {
         NSString *msg = [exception reason];
         
@@ -108,7 +108,7 @@
          }];
         
         @throw exception;
-    }
+    }*/
 }
 
 @end

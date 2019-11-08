@@ -7,6 +7,7 @@
 //
 
 #import "VolumeNameTransformer.h"
+#import "NSURL-Extensions.h"
 
 
 @implementation VolumeNameTransformer
@@ -24,9 +25,11 @@
 {
 	if ( value == nil )
 		return nil;
+    
+    NSURL *vol = value;
 	
-	NSString *name = [value valueForKeyPath: @"mountPoint.displayName"];
-	NSString *volumeType = [value valueForKeyPath: @"volumeFormat"];
+	NSString *name = [vol cachedDisplayName];
+	NSString *volumeType = [vol cachedVolumeFormatName];
 	
 	//create an attributed string with the format "<volume display name><line break> <volume format>"
 	
@@ -34,17 +37,20 @@
 	NSMutableAttributedString *attribString = [[NSMutableAttributedString alloc] initWithString: name 
 																					 attributes: [VolumeNameTransformer volumeTitleAttributes]];
 	
-	//add line break to string
-	[attribString appendAttributedString: [[[NSAttributedString alloc] initWithString: @"\n "] autorelease]];
-	
 	//volume type (e.g. "HFS+")
-	NSAttributedString *volumeTypeString = [[NSAttributedString alloc] initWithString: volumeType
-																		   attributes: [VolumeNameTransformer volumeTypeAttributes]];
+    if ( volumeType != nil )
+    {
+        //add line break to string
+        [attribString appendAttributedString: [[[NSAttributedString alloc] initWithString: @"\n "] autorelease]];
+
+        NSAttributedString *volumeTypeString = [[NSAttributedString alloc] initWithString: volumeType
+                                                                               attributes: [VolumeNameTransformer volumeTypeAttributes]];
 	
-	//add volume format as second line
-	[attribString appendAttributedString: volumeTypeString];
-	[volumeTypeString release];
-	
+        //add volume format as second line
+        [attribString appendAttributedString: volumeTypeString];
+        [volumeTypeString release];
+    }
+    
 	return [attribString autorelease];
 }
 

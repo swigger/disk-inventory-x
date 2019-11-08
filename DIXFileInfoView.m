@@ -26,19 +26,19 @@
 
 - (NSArray*)infoPairs
 {
-	NTFileDesc *desc = [self desc];
+	NSURL *url = [self URL];
 	
 	NSMutableArray *infoPairs = (NSMutableArray*) [super infoPairs];
 	OBPRECONDITION( [infoPairs isKindOfClass: [NSMutableArray class]] );
 
 	//NTInfoView shows the display name (possibly localized and with hidden extension), but we want the "raw" name
 	//(the display name is shown above next to the image in the inspector panel)
-	if ( desc != nil )
+	if ( url != nil && infoPairs != nil && [infoPairs count] > 0 )
 	{
 		NTTitledInfoPair *oldNameInfoPair = [infoPairs objectAtIndex: 0];
 		
 		[infoPairs replaceObjectAtIndex: 0
-							 withObject: [NTTitledInfoPair infoPair: [oldNameInfoPair title] info: [desc name]]];
+							 withObject: [NTTitledInfoPair infoPair: [oldNameInfoPair title] info: [url name]]];
 	}
 
 	return infoPairs;

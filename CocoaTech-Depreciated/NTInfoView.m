@@ -8,6 +8,8 @@
 
 #import "NTInfoView.h"
 #import "NTTitledInfoPair.h"
+#import "AppsForItem.h"
+#import "NSURL-Extensions.h"
 #import <CocoaTechStrings/NTLocalizedString.h>
 
 #pragma warning "ID3 support removed"
@@ -19,9 +21,11 @@
 - (NSArray*)infoPairs;
 - (NSArray*)longInfoPairs;
 - (void)resetForNewItem;
-- (NSArray*)sizePairs:(BOOL)calcFolderSizeImmediately;
-- (void)setFolderSizeInfo:(NSNumber*)size totalValence:(NSNumber*)totalValence;
-//- (void)startCalcSizeThread;
+- (NSArray*)sizePairs;
+
+// adopted from CocoaTechFile (NTFileDesc-NTUtilities.m)
++ (NSString*) permissionStringForURL: (NSURL*) URL;
++ (NSString*)permissionOctalStringForModeBits:(UInt16)modeBits;
 @end
 
 @implementation NTInfoView
@@ -58,25 +62,23 @@
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
-    [_desc release];
+    [_URL release];
     [_titledInfoView release];
-    //[_calcSizeThread release];
-    [_calculatedFolderSize release];
     [_calculatedFolderNumItems release];
     
     [super dealloc];
 }
 
-- (NTFileDesc*)desc;
+- (NSURL*) URL
 {
-    return _desc;
+    return _URL;
 }
 
-- (void)setDesc:(NTFileDesc*)desc;
+- (void)setURL:(NSURL*)url;
 {    
     [self resetForNewItem];
 
-    _desc = [desc retain];
+    _URL = [url retain];
 
     [self updateInfoView];
 }
@@ -91,11 +93,8 @@
 {
     //[_calcSizeThread halt];
     
-    [_desc autorelease];
-    _desc = nil;
-    
-    [_calculatedFolderSize release];
-    _calculatedFolderSize = nil;
+    [_URL autorelease];
+    _URL = nil;
     
     [_calculatedFolderNumItems release];
     _calculatedFolderNumItems = nil;
@@ -155,42 +154,23 @@
 {
     NSMutableArray* infoPairs = [NSMutableArray arrayWithCapacity:15];
     
-    if (_desc && [_desc isValid])
+    if (_URL && [_URL stillExists])
     {
-        NSString* version;
-        NTFileTypeIdentifier* typeID = [_desc typeIdentifier];
-        NTFileDesc* descPref = [_desc descResolveIfAlias];
+        [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Name:" table:@"preview"] info:[_URL cachedDisplayName]]];
         
-        int valence = -1;        
-        if ([_desc isDirectory] && ![_desc isPackage])
-            valence = [_desc valence];        
+        NSString *kindName = [_URL getCachedStringValue: NSURLLocalizedTypeDescriptionKey];
+        [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Kind:" table:@"preview"] info:kindName]];
         
-        [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Name:" table:@"preview"] info:[_desc displayName]]];
-        
-        if (valence > 0)
-            [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Kind:" table:@"preview"] info:[NSString stringWithFormat:@"%@ (%d)", [_desc kindString], valence]]];
-        else
-            [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Kind:" table:@"preview"] info:[_desc kindString]]];
-        
-        if ([_desc isNetwork])
-            [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"URL:"] info:[[[_desc volume] volumeURL] absoluteString]]];
-#pragma warning "support webloc files removed"
-/*
-        else
+        if ([_URL isVolume] && ![_URL isLocalVolume])
         {
-            NSURL* url = [NTWeblocFile urlFromWeblocFile:_desc];
-            if (url)
-                [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"URL:"] info:[url absoluteString]]];
+            NSURL *networkURL = nil;
+            [_URL getResourceValue: &networkURL forKey: NSURLVolumeURLForRemountingKey error: nil];
+            if ( networkURL != nil )
+                [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"URL:"] info: [networkURL absoluteString]]];
         }
- */
-        [infoPairs addObjectsFromArray:[self sizePairs:NO]];
+
+        [infoPairs addObjectsFromArray:[self sizePairs]];
         
-        // old version using CocoaTech's NTDateFormatter
-        /*
-        [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Modified:" table:@"preview"] info:[[_desc modificationDate] dateString:kMediumDate relative:YES]]];
-        [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Created:" table:@"preview"] info:[[_desc creationDate] dateString:kMediumDate relative:YES]]];
-        */
-        // now using NSDateFormatter (NTDateFormatter does not work on newer OS versions)
         {
             NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
             [dateFormatter setDateStyle:NSDateFormatterMediumStyle];
@@ -198,46 +178,79 @@
             [dateFormatter setLocale:[NSLocale currentLocale]];
             
             [infoPairs addObject:[NTTitledInfoPair infoPair: [NTLocalizedString localize:@"Modified:" table:@"preview"]
-                                                       info: [dateFormatter stringFromDate:[_desc modificationDate]]]];
+                                                       info: [dateFormatter stringFromDate:[_URL cachedModificationDate]]]];
             [infoPairs addObject:[NTTitledInfoPair infoPair: [NTLocalizedString localize:@"Created:" table:@"preview"]
-                                                       info: [dateFormatter stringFromDate:[_desc creationDate]]]];
+                                                       info: [dateFormatter stringFromDate:[_URL cachedCreationDate]]]];
         }
         
-        [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Owner:" table:@"preview"] info:[_desc ownerName]]];
-        [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Group:" table:@"preview"] info:[_desc groupName]]];
-        [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Permission:" table:@"preview"] info:[_desc permissionString]]];
+        NSDictionary<NSFileAttributeKey, id> *attribs = [[NSFileManager defaultManager] attributesOfItemAtPath:[_URL path] error:nil];
         
-        if ([_desc type])
-            [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Type:" table:@"preview"] info:NSFileTypeForHFSTypeCode([_desc type])]];
-        if ([_desc creator])
-            [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Creator:" table:@"preview"] info:NSFileTypeForHFSTypeCode([_desc creator])]];
+        if ( attribs != nil )
+        {
+            [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Owner:" table:@"preview"] info:[attribs fileOwnerAccountName]]];
+            [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Group:" table:@"preview"] info:[attribs  fileGroupOwnerAccountName]]];
+        }
         
-        version = [_desc infoString];
-        if (!version || ![version length])
-            version = [_desc versionString];
-        if (version && [version length])
-            [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Version:" table:@"preview"] info:version]];
+        [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Permission:" table:@"preview"] info:[NTInfoView permissionStringForURL: _URL]]];
+
+        {
+            NSBundle *bundle = [NSBundle bundleWithURL:_URL];
+            if (bundle)
+            {
+                NSString *version = nil;
+                
+                struct
+                { NSDictionary *dict; NSString *key; } bundleVersionInfos
+                []=
+                {
+                    { [bundle localizedInfoDictionary], @"CFBundleGetInfoString" },
+                    { [bundle infoDictionary],          @"CFBundleGetInfoString" },
+                    { [bundle localizedInfoDictionary], @"CFBundleShortVersionString" },
+                    { [bundle infoDictionary],          @"CFBundleShortVersionString" },
+
+                };
+                
+                for ( int i = 0;
+                     i < sizeof(bundleVersionInfos)/sizeof(bundleVersionInfos[0])
+                    && (version == nil || [version length] == 0);
+                    i++)
+                {
+                    version = [bundleVersionInfos[0].dict objectForKey:bundleVersionInfos[0].key];
+                }
+                
+                if (version && [version length])
+                    [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Version:" table:@"preview"] info:version]];
+            }
+        }
         
-        [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Path:" table:@"preview"] info:[_desc path]]];
+        [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Path:" table:@"preview"] info:[_URL path]]];
         
         // if alias or symbolic link - resolved:
-        if ([_desc isAlias])
+        NSURL *resolvedURL = nil; //needed below
+        if ([_URL cachedIsAliasOrSymbolicLink] )
         {
-            NTFileDesc* resolved = [_desc descResolveIfAlias];
+            NSString *resolvedPath = [[NSFileManager defaultManager] destinationOfSymbolicLinkAtPath:[_URL path] error:nil];
             
-            if (resolved)
-                [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Resolved:" table:@"preview"] info:[resolved path]]];
+            if (resolvedPath)
+            {
+                resolvedURL = [NSURL fileURLWithPath:resolvedPath];
+                
+                [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Resolved:" table:@"preview"] info:resolvedPath]];
+            }
         }
-        
-        // make sure the item is resolved (match the pref)
-        if ([descPref application] != nil)
-        {  
-            NTFileDesc* appDesc = [descPref application];
-            
-            if ([appDesc isValid])
-                [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Application:" table:@"preview"] info:[appDesc displayName]]];
-        }
+ 
+        // application to open the file
+        {
+            NSURL *url = (resolvedURL != nil ? resolvedURL : _URL);
 
+            NSURL *appURL = [[AppsForItem appsForItemURL:url] defaultAppURL];
+
+            // if _URL is an application, LSCopyDefaultApplicationURLForURL(..) returns the app URL, so sort that out
+            if (appURL != nil && ![appURL isEqualToURL: _URL])
+            {
+                    [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Application:" table:@"preview"] info:[appURL displayName]]];
+            }
+        }
 #pragma warning "ID3 support disabled"
 /*
         if ([typeID isMP3])
@@ -246,103 +259,45 @@
             [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"MP3:" table:@"preview"] info:[helper infoString]]];
         }
 */
-		NTVolume *volume = [_desc volume];
-        
-        [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Format:" table:@"preview"] info:[volume fileSystemName]]];
+
+        /*
+        [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Format:" table:@"preview"] info:[_URL cachedVolumeFormatName]]];
         [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Mount Point:" table:@"preview"] info:[[volume mountPoint] path]]];
         [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Device:" table:@"preview"] info:[volume mountDevice]]];
-    }
-    
+ */   }
     return infoPairs;
 }
 
-//	Tjark Derlien Sep 2009: threaded folder size calculation removed as a folder's size
-//	is calculated while traversing the file system and thus will be available when
-//	the info pane is opened for a folder
-/*
-- (void)startCalcSizeThread;
-{
-    // this cancels any thread already in progress
-    [_calcSizeThread runThread:[SizeCalculatorThread class] param:[SizeCalculatorParam paramWithTokens:[NSArray arrayWithObject:[CalcSizeToken calcSizeForDesc:_desc withItemIdentifier:nil]]]];
-}
-
-- (void)calcFolderSizeButton:(id)sender;
-{
-    [self startCalcSizeThread];
-    
-    [self updateInfoView];
-}
-
-- (void)sizeCalcNotification:(NSNotification*)notification;
-{
-    NSDictionary *userInfo = [notification userInfo];
-    SizeCalculatorParam* param = (SizeCalculatorParam*) [userInfo objectForKey:@"data"];
-    
-    if (param)
-    {
-        NSArray* sizes = [param resultsArray];
-        
-        if ([sizes count] > 0)
-        {
-            CalcSizeResult* result = [sizes objectAtIndex:0];
-            
-            NSNumber* size = [result size];
-            NSNumber* totalValence = nil;
-                        
-            // this is false for volumes
-            if ([result isNumItemsValid])
-                totalValence = [result numItems];
-                
-            [self setFolderSizeInfo:size totalValence:totalValence];
-            [self updateInfoView];
-
-            // record the size in our desc
-            [_desc setFolderSize:[size unsignedLongLongValue]];
-            
-            if (totalValence)
-                [_desc setTotalValence:[totalValence unsignedLongLongValue]];
-        }
-    }
-}
- */
 
 - (NSArray*)longInfoPairs;
 {
     NSMutableArray* infoPairs = [NSMutableArray arrayWithCapacity:15];
     
-    if (_desc && [_desc isValid])
-    {
-        NTFileTypeIdentifier* typeID = [_desc typeIdentifier];
-        NTFileDesc* descPref = [_desc descResolveIfAlias];
-        
-        int valence = -1;        
-        if ([_desc isDirectory] && ![_desc isPackage] )
-            valence = [_desc valence];
-        
-        if (valence > 0)
-            [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Kind:" table:@"preview"] info:[NSString stringWithFormat:@"%@ (%d)", [_desc kindString], valence]]];
-        else
-            [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Kind:" table:@"preview"] info:[_desc kindString]]];
+    if (_URL && [_URL stillExists])
+     {
+         [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Name:" table:@"preview"] info:[_URL cachedDisplayName]]];
+         
+         NSString *kindName = [_URL getCachedStringValue: NSURLLocalizedTypeDescriptionKey];
+         [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Kind:" table:@"preview"] info:kindName]];
+         
+         if ([_URL isVolume] && ![_URL isLocalVolume])
+         {
+             NSURL *networkURL = nil;
+             [_URL getResourceValue: &networkURL forKey: NSURLVolumeURLForRemountingKey error: nil];
+             if ( networkURL != nil )
+                 [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"URL:"] info: [networkURL absoluteString]]];
+         }
 
-        if ([_desc isNetwork])
-            [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"URL:"] info:[[[_desc volume] volumeURL] absoluteString]]];
-#pragma warning "support webloc files removed"
-        /*
-       else
-        {
-            NSURL* url = [NTWeblocFile urlFromWeblocFile:_desc];
-            if (url)
-                [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"URL:"] info:[url absoluteString]]];
-        }
-*/
         
-        [infoPairs addObjectsFromArray:[self sizePairs:YES]];
+        [infoPairs addObjectsFromArray:[self sizePairs]];
         
+#pragma warning "to be reimplemented using NSURL & co"
+/*
         [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Modified:" table:@"preview"] info:[[_desc modificationDate] dateString:kLongDate relative:NO]]];
         [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Created:" table:@"preview"] info:[[_desc creationDate] dateString:kLongDate relative:NO]]];
         [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Path:" table:@"preview"] info:[_desc path]]];
         
-        // if alias or symbolic link - resolved:
+         // if alias or symbolic link - resolved:
         if ([_desc isAlias])
         {
             NTFileDesc* resolved = [_desc descResolveIfAlias];
@@ -370,7 +325,7 @@
             if ([appDesc isValid])
                 [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Application:" table:@"preview"] info:[appDesc displayName]]];
         }
-		
+*/
 #pragma warning "ID3 support removed"
         // mp3
        /*
@@ -380,7 +335,10 @@
             [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"MP3:" table:@"preview"] info:[helper infoString]]];
         }
         */
-		NTVolume *volume = [_desc volume];
+
+#pragma warning "to be reimplemented using NSURL & co"
+/*
+         NTVolume *volume = [_desc volume];
          
         [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Volume:" table:@"preview"] info:[[volume mountPoint] displayName]]];
         [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Capacity:" table:@"preview"] info:[[NTSizeFormatter sharedInstance] fileSize:[volume totalBytes]]]];
@@ -388,14 +346,18 @@
         [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Format:" table:@"preview"] info:[volume fileSystemName]]];
         [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Mount Point:" table:@"preview"] info:[[volume mountPoint] path]]];
         [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Device:" table:@"preview"] info:[volume mountDevice]]];
+ */
     }
     
     return infoPairs;
 }
 
-- (NSArray*)sizePairs:(BOOL)calcFolderSizeImmediately;
+- (NSArray*)sizePairs
 {
     NSMutableArray* infoPairs = [NSMutableArray arrayWithCapacity:2];
+
+    #pragma warning "to be reimplemented using NSURL & co"
+    /*
 
     if ([_desc isFile])
     {
@@ -437,57 +399,13 @@
     {
 		[self setFolderSizeInfo: [NSNumber numberWithUnsignedLongLong:[_desc size]]
 				   totalValence: [NSNumber numberWithUnsignedLongLong:[_desc valence]]];
-
-		/*       
-		 //	Tjark Derlien Sep 2009: threaded folder size calculation removed as a folder's size
-		 //	is calculated while traversing the file system and thus will be available when
-		 //	the info pane is opened for a folder
-		 
-        // check if folder size is already calced		
-        if (!_calculatedFolderSize)
-        {
-            if ([_desc folderSizeIsCalculated])
-            {
-                NSNumber* totalValence = nil;
-                if ([_desc folderTotalValenceIsCalculated])
-                    totalValence = [NSNumber numberWithUnsignedLongLong:[_desc totalValence]];
-                
-                [self setFolderSizeInfo:[NSNumber numberWithUnsignedLongLong:[_desc size]] totalValence:totalValence];
-            }
-        }
-		
-        if (_calculatedFolderSize)
-        {
-            [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Size:" table:@"preview"] info:_calculatedFolderSize]];
-            
-            // volumes return 0 items, so we keep it nil
-            if (_calculatedFolderNumItems != nil)
-                [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Contents:" table:@"preview"] info:_calculatedFolderNumItems]];
-        }
-        else
-        {        
-            if (calcFolderSizeImmediately && [_calcSizeThread idle])
-                [self startCalcSizeThread];
-            
-            // if thread is idle, put up a "Calculate" button
-            if ([_calcSizeThread idle])
-                [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Size:" table:@"preview"] info:[NTLocalizedString localize:@"Calculate" table:@"preview"] action:@selector(calcFolderSizeButton:) target:self]];
-            else
-            {
-                [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Size:" table:@"preview"] info:[NTLocalizedString localize:@"Calculating..." table:@"preview"]]];
-                [infoPairs addObject:[NTTitledInfoPair infoPair:[NTLocalizedString localize:@"Contents:" table:@"preview"] info:[NTLocalizedString localize:@"Calculating..." table:@"preview"]]];
-            }
-        }  
-  */
     }
-    
+    */
     return infoPairs;
 }
 
 - (void)setFolderSizeInfo:(NSNumber*)size totalValence:(NSNumber*)totalValence;
 {
-    _calculatedFolderSize = [[[NTSizeFormatter sharedInstance] fileSize:[size unsignedLongLongValue]] retain];
-    
     // this is nil for volumes
     if (totalValence)
     {
@@ -499,6 +417,140 @@
         
         _calculatedFolderNumItems = [[[formatter stringForObjectValue:totalValence] stringByAppendingString:[NTLocalizedString localize:@" items" table:@"preview"]] retain];
     }
+}
+
+
+#import <sys/stat.h>
+
++ (NSString*) permissionStringForURL: (NSURL*) URL
+{
+    NSString* perm = @"";
+
+    // get mode bits
+    // [NSFileManager attributesOfItemAtPath:error:] provides the permission bits ([NSFileAttributes filePosixPermissions]),
+    // but not the complete mode bits; so use the carbon functions instead ...
+    
+    FSRef ref;
+    if ( FSPathMakeRef([URL fileSystemRepresentation], &ref, nil) != noErr )
+        return perm;
+    
+    FSCatalogInfo catalogInfo;
+    if ( FSGetCatalogInfo(&ref, kFSCatInfoPermissions, &catalogInfo, NULL, NULL, NULL) != noErr )
+        return perm;
+    
+    UInt16 modeBits = catalogInfo.permissions.mode;
+    UInt16 permBits = (modeBits & ACCESSPERMS);
+    
+    if (S_ISDIR(modeBits))
+        perm = [perm stringByAppendingString:@"d"];
+    else if (S_ISCHR(modeBits))
+        perm = [perm stringByAppendingString:@"c"];
+    else if (S_ISBLK(modeBits))
+        perm = [perm stringByAppendingString:@"b"];
+    else if (S_ISLNK(modeBits))
+        perm = [perm stringByAppendingString:@"l"];
+    else if (S_ISSOCK(modeBits))
+        perm = [perm stringByAppendingString:@"s"];
+    else if (S_ISWHT(modeBits))
+        perm = [perm stringByAppendingString:@"w"];
+    else if (S_ISREG(modeBits))
+        perm = [perm stringByAppendingString:@"-"];
+    else
+        perm = [perm stringByAppendingString:@" "];  // what is it?
+    
+    // Owner
+    perm = [perm stringByAppendingString:(permBits & S_IRUSR) ? @"r" : @"-"];
+    perm = [perm stringByAppendingString:(permBits & S_IWUSR) ? @"w" : @"-"];
+    
+    if (permBits & S_IXUSR)
+    {
+        if ((S_ISUID & modeBits) || (S_ISGID & modeBits))
+            perm = [perm stringByAppendingString:@"s"];
+        else
+            perm = [perm stringByAppendingString:@"x"];
+    }
+    else
+    {
+        if ((S_ISUID & modeBits) || (S_ISGID & modeBits))
+            perm = [perm stringByAppendingString:@"S"];
+        else
+            perm = [perm stringByAppendingString:@"-"];
+    }
+    
+    // Group
+    perm = [perm stringByAppendingString:(permBits & S_IRGRP) ? @"r" : @"-"];
+    perm = [perm stringByAppendingString:(permBits & S_IWGRP) ? @"w" : @"-"];
+    
+    if (permBits & S_IXGRP)
+    {
+        if ((S_ISUID & modeBits) || (S_ISGID & modeBits))
+            perm = [perm stringByAppendingString:@"s"];
+        else
+            perm = [perm stringByAppendingString:@"x"];
+    }
+    else
+    {
+        if ((S_ISUID & modeBits) || (S_ISGID & modeBits))
+            perm = [perm stringByAppendingString:@"S"];
+        else
+            perm = [perm stringByAppendingString:@"-"];
+    }
+    
+    // Others
+    perm = [perm stringByAppendingString:(permBits & S_IROTH) ? @"r" : @"-"];
+    perm = [perm stringByAppendingString:(permBits & S_IWOTH) ? @"w" : @"-"];
+    
+    if (permBits & S_IXOTH)
+    {
+        if ((S_ISUID & modeBits) || (S_ISGID & modeBits))
+            perm = [perm stringByAppendingString:@"s"];
+        else
+        {
+            // check sticky bit
+            if (S_ISVTX & modeBits)
+                perm = [perm stringByAppendingString:@"t"];
+            else
+                perm = [perm stringByAppendingString:@"x"];
+        }
+    }
+    else
+    {
+        if ((S_ISUID & modeBits) || (S_ISGID & modeBits))
+            perm = [perm stringByAppendingString:@"S"];
+        else
+        {
+            // check sticky bit
+            if (S_ISVTX & modeBits)
+                perm = [perm stringByAppendingString:@"T"];
+            else
+                perm = [perm stringByAppendingString:@"-"];
+        }
+    }
+    
+    if (YES/*includeOctal*/)
+    {
+        perm = [perm stringByAppendingString:@" ("];
+        perm = [perm stringByAppendingString:[self permissionOctalStringForModeBits:modeBits]];
+        perm = [perm stringByAppendingString:@")"];
+    }
+    
+    return perm;
+}
+
++ (NSString*)permissionOctalStringForModeBits:(UInt16)modeBits;
+{
+    int chmodNum;
+    UInt32 permBits = (modeBits & ACCESSPERMS);
+    
+    // add - chmod 755
+    chmodNum = 100 * ((permBits & S_IRWXU) >> 6);  // octets
+    chmodNum += 10 * ((permBits & S_IRWXG) >> 3);
+    chmodNum += 1 * (permBits & S_IRWXO);
+    
+    char buff[20];
+    snprintf(buff, 20, "%03d", chmodNum);
+    
+    return [NSString stringWithCString:buff encoding:NSASCIIStringEncoding];
 }
 
 @end

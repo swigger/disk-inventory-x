@@ -7,14 +7,13 @@
 //
 
 #import "FileSystemDoc.h"
+#import "NSURL-Extensions.h"
 #import "MainWindowController.h"
 #import "DrivesPanelController.h"
 #import "FileSizeFormatter.h"
 #import "Timing.h"
 #import "InfoPanelController.h"
-#import "NTDefaultDirectory-Utilities.h"
 #import "FSItem-Utilities.h"
-#import "NTFileDesc-AccessExtensions.h"
 #import <OmniFoundation/NSArray-OFExtensions.h>
 
 NSString *CollectFileKindStatisticsCanceledException = @"CollectFileKindStatisticsCanceledException";
@@ -136,7 +135,7 @@ NSString *CollectFileKindStatisticsCanceledException = @"CollectFileKindStatisti
 - (void) reserveColorsForLargestKinds;
 
 - (void) checkTrash: (FSItem*) trashItem
-withPreviousContent: (NSArray*) oldContent
+withPreviousContent: (NSArray<NSURL*>*) oldContent
 			forItem: (FSItem*) itemTrashed;
 
 - (void) recalculateTotalSize;
@@ -232,13 +231,15 @@ NSString *OldItem = @"OldItem";
     //now the real work: loading the folder contents
     @try
     {
+        g_fileCount = g_folderCount = 0;
+        
 		_progressController = [[LoadingPanelController alloc] init];
 		[_progressController startAnimation];	
 		
 		uint64_t startTime = getTime();
 		
         _rootItem = [[FSItem alloc] initWithPath: folder];
-		if ( ![[_rootItem fileDesc] isValid] )
+		if ( ![[_rootItem fileURL] stillExists] )
 		{
 			[_rootItem release];
 			_rootItem = nil;
@@ -417,6 +418,7 @@ NSString *OldItem = @"OldItem";
 
 - (void) setIgnoreCreatorCode: (BOOL) ignoreIt
 {
+    /*
 	[[self viewOptions] setIgnoreCreatorCode: ignoreIt];
 	
 	[[self rootItem] setKindStringIgnoringCreatorCode: ignoreIt includeChilds: YES];
@@ -424,6 +426,7 @@ NSString *OldItem = @"OldItem";
 	[self refreshFileKindStatistics];
 	
 	[self postViewOptionChangedNotificationForOption: IgnoreCreatorCode];
+     */
 }
 
 //helper method; returns YES/NO for packages in dependency of the showPackageContents-Flag
@@ -450,7 +453,7 @@ NSString *OldItem = @"OldItem";
 	NSParameterAssert( item != nil && item != [self zoomedItem] && ![item isSpecialItem] );
 	
 	//remember trash content so we can find the trashed item afterwards
-	NSArray *prevTrashContents = nil;
+	NSArray<NSURL*> *prevTrashContents = nil;
 	FSItem *trashItem = nil;
 	
 	//As the trash visible to the user only shows trashed files/folders on local volumes,
@@ -458,19 +461,21 @@ NSString *OldItem = @"OldItem";
 	//If we would perform a NSWorkspaceRecycleOperation on a file/folder residing on a network volume,
 	//it would be moved to .Trashes/.<user-id> on that volume.
 	
-	if ( ![[item fileDesc] isNetwork] )
+	if ( [[item fileURL] isLocalVolume] )
 	{
-		NTFileDesc *trashDesc = [[NTDefaultDirectory sharedInstance] safeTrashForDesc: [item fileDesc]];
-		trashItem = [trashDesc isValid] ? [[self rootItem] findItemByAbsolutePath: [trashDesc path] allowAncestors: NO] : nil;
+        NSURL *trashURL = [[NSFileManager defaultManager] URLForDirectory:NSTrashDirectory inDomain:NSUserDomainMask appropriateForURL:[item fileURL] create:NO error:nil];
+        
+        if ( trashURL != nil )
+            trashItem = [[self rootItem] findItemByAbsolutePath: [trashURL path] allowAncestors: NO];
 		
 		if ( trashItem != nil )
-			prevTrashContents = [trashDesc directoryContents: NO/*visibleOnly*/ resolveIfAlias: NO];
+            prevTrashContents = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:trashURL includingPropertiesForKeys:[NSArray array] options:0 error:nil];
 	}
 	
 	//move file/folder to trash
 	NSArray *filesToTrash = [NSArray arrayWithObject: [item name]];
 	NSInteger tag = 0;
-	if ( ![[NSWorkspace sharedWorkspace] performFileOperation: [[item fileDesc] isNetwork] ? NSWorkspaceDestroyOperation : NSWorkspaceRecycleOperation
+	if ( ![[NSWorkspace sharedWorkspace] performFileOperation: ![[item fileURL] isLocalVolume] ? NSWorkspaceDestroyOperation : NSWorkspaceRecycleOperation
 													  source: [item folderName]
 												 destination: @""
 													   files: filesToTrash
@@ -541,9 +546,17 @@ NSString *OldItem = @"OldItem";
 	if ( item == nil )
 	{
 		//the folder/volume which we are showing doesn't exist anymore!
-		[NTSimpleAlert infoSheet: [[[self windowControllers] objectAtIndex: 0] window]
-						 message: [NSString stringWithFormat: @"\"%@\" does not exist any more.", [[self rootItem] displayPath]]
-					  subMessage: NSLocalizedString( @"The folder will remain visible in Disk Inventory X, but the files cannot be accessed (e.g. shown in the Finder).",@"") ];
+        NSString *msg = [NSString stringWithFormat: @"\"%@\" does not exist any more.", [[self rootItem] displayPath]];
+        NSString *subMsg = NSLocalizedString( @"The folder will remain visible in Disk Inventory X, but the files cannot be accessed (e.g. shown in the Finder).",@"");
+        
+        NSBeginInformationalAlertSheet( msg,
+                                       [NTLocalizedString localize:@"OK" table:@"CocoaTechBase"],
+                                       nil, nil,
+                                       [[[self windowControllers] objectAtIndex: 0] window],
+                                       nil, NULL, NULL, nil,
+                                       @"%@",
+                                       subMsg );
+
 		return;
 	}
 	
@@ -554,7 +567,7 @@ NSString *OldItem = @"OldItem";
 		//(of course this could have changed since the loading, but what criteria should
 		//we use instead?)
 		NSAssert( _progressController == nil, @"progress panel wasn't destroyed after last use" );
-		unsigned progressPanelLimit = [[item fileDesc] isNetwork] ? 200 : 500;
+		unsigned progressPanelLimit = ![[item fileURL] isLocalVolume] ? 200 : 500;
 		if ( [item deepFileCountIncludingPackages: YES] > progressPanelLimit )
 		{
 			//NSWindow *window = [[[self windowControllers] objectAtIndex: 0] window];
@@ -582,9 +595,14 @@ NSString *OldItem = @"OldItem";
 		else
 		{
 			//error
-			[NTSimpleAlert infoSheet: [[[self windowControllers] objectAtIndex: 0] window]
-							 message: NSLocalizedString( @"The folder's content could not be loaded.", @"")
-						  subMessage: [localException reason] ];
+            NSBeginInformationalAlertSheet( NSLocalizedString( @"The folder's content could not be loaded.", @""),
+                                           [NTLocalizedString localize:@"OK" table:@"CocoaTechBase"],
+                                           nil, nil,
+                                           [[[self windowControllers] objectAtIndex: 0] window],
+                                           nil, NULL, NULL, nil,
+                                           @"%@",
+                                           [localException reason] );
+
 		}
 		NS_VOIDRETURN;
 	NS_ENDHANDLER
@@ -686,7 +704,7 @@ NSString *OldItem = @"OldItem";
         [self refreshFileKindStatistics];
 		
 		//there is no "other" space if a complete volume is shown 
-		if ( [[self viewOptions] showOtherSpace] && [[[self zoomedItem] fileDesc] isVolume] )
+		if ( [[self viewOptions] showOtherSpace] && [[[self zoomedItem] fileURL] isVolume] )
 			[[self viewOptions] setShowOtherSpace: NO]; //don't use our set-method as we don't want any notifications posted
 
 		[self postNotificationName: ZoomedItemChangedNotification oldItem: oldZoomedItem newItem: [self zoomedItem]];
@@ -729,7 +747,7 @@ NSString *OldItem = @"OldItem";
     [self refreshFileKindStatistics];
 
 	//there is no "other" space if a complete volume is shown 
-	if ( [[self viewOptions] showOtherSpace] && [[[self zoomedItem] fileDesc] isVolume] )
+	if ( [[self viewOptions] showOtherSpace] && [[[self zoomedItem] fileURL] isVolume] )
 		[[self viewOptions] setShowOtherSpace: NO]; //don't use our set-method as we don't want any notifications posted
 
 	[self postNotificationName: ZoomedItemChangedNotification oldItem: oldZoomedItem newItem: [self zoomedItem]];
@@ -859,7 +877,7 @@ NSString *OldItem = @"OldItem";
 	if ( _progressController == nil )
 		return YES; //YES == continue loading
 	
-	NSParameterAssert( [_directoryStack lastObject] == item );
+    NSAssert( [_directoryStack lastObject] == item, @"last stack object: %@, item: %@", [[_directoryStack lastObject] fileURL], [item fileURL] );
 	[_directoryStack removeLastObject];
 	
 	return YES;
@@ -947,17 +965,20 @@ NSString *OldItem = @"OldItem";
     if ( ![self itemIsNode: item] )
     {
         //item is a file (or regarded as such if item is a package and "show package contents" is turned off),
-		//so add it's informations to the appropriate statistic object
-        FileKindStatistic* kindStatistic = [self kindStatisticForItem: item];
-        if ( kindStatistic == nil )
+        //so add it's informations to the appropriate statistic object
+        if ( [item kindName] != nil )
         {
-            //we don't have a statistic object for the item's kind yet, so create one
-            kindStatistic = [[FileKindStatistic alloc] initWithItem: item];
-            [_fileKindStatistics setObject: kindStatistic forKey: [item kindName]];
-            [kindStatistic release];
+            FileKindStatistic* kindStatistic = [self kindStatisticForItem: item];
+            if ( kindStatistic == nil )
+            {
+                //we don't have a statistic object for the item's kind yet, so create one
+                kindStatistic = [[FileKindStatistic alloc] initWithItem: item];
+                [_fileKindStatistics setObject: kindStatistic forKey: [item kindName]];
+                [kindStatistic release];
+            }
+            else
+                [kindStatistic addItem: item];
         }
-        else
-            [kindStatistic addItem: item];
 	}
 	else if ( includingChilds )
 	{
@@ -1095,39 +1116,35 @@ NSString *OldItem = @"OldItem";
 //(the FSRef of the trashed item is unfortunately no longer valid and the Finder might have renamed it,
 //so we don't have any chance to get hold of the trashed item wit)
 - (void) checkTrash: (FSItem*) trashItem
-withPreviousContent: (NSArray*) oldContent
+withPreviousContent: (NSArray<NSURL*>*) oldContent
 			forItem: (FSItem*) itemTrashed
 {
-	//get current content of trash 
-	NSArray *newContent = [[trashItem fileDesc] directoryContents: NO/*visibleOnly*/ resolveIfAlias: NO];
+	//get current content of trash
+ 	NSArray<NSURL*> *newContent = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:[trashItem fileURL] includingPropertiesForKeys:[NSArray array] options:0 error:nil];;
 	
 	//let's see which items are new in the trash	
 	//remove all items from "newContentIndex" which are also in "oldContent" and the new ones will remain
 	NSMutableDictionary *newContentIndex = [[newContent indexBySelector: @selector(name)] mutableCopy];
 	[newContentIndex autorelease]; //mutableCopy returns a retained object (not autoreleased)
 	
-	NSEnumerator *oldContentEnum = [oldContent objectEnumerator];
-	NTFileDesc *desc;
-	while ( (desc = [oldContentEnum nextObject]) != nil )
-		[newContentIndex removeObjectForKey: [desc name]];
+	for ( NSURL *file in oldContent )
+		[newContentIndex removeObjectForKey: [file name]];
 	
 	//now look which of the new items might be "itemTrashed" (the Finder might have renamed it)
 	//first, direct name match
-	desc = [newContentIndex objectForKey: [itemTrashed name]];
+	NSURL *trashedURL = [newContentIndex objectForKey: [itemTrashed name]];
 	//second try: look for an item starting with the name of the trashed one
-	if ( desc == nil )
+	if ( trashedURL == nil )
 	{
 		NSEnumerator *newContentEnum = [newContentIndex objectEnumerator];
-		while ( (desc = [newContentEnum nextObject]) != nil && [[desc name] hasPrefix: [itemTrashed name]] );
+		while ( (trashedURL = [newContentEnum nextObject]) != nil && [[trashedURL name] hasPrefix: [itemTrashed name]] );
 	}
 	
 	//if the trashed item isn't found, we simply do nothing (okay, we could do a reload of "trashItem")
-	if ( desc != nil )
+	if ( trashedURL != nil )
 	{
-		//keep the size of "itemTrashed"...
-		[desc setSize: [itemTrashed sizeValue]];
-		//...but give "itemTrashed" the valid NTFileDesc object
-		[itemTrashed setFileDesc: desc];
+		//keep the size of "itemTrashed", but associate with the valid URL
+		[itemTrashed setFileURL: trashedURL];
 
 		[trashItem insertChild: itemTrashed updateParent: YES];
 		

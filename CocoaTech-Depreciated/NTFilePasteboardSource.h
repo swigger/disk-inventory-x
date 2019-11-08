@@ -14,13 +14,13 @@
 
 @interface NTFilePasteboardSource : NSObject
 {
-    NSArray *_descs;
+    NSArray<NSURL*> *_URLs;
 }
 
-+ (NTFilePasteboardSource*)files:(NSArray*)descArray toPasteboard:(NSPasteboard *)pboard types:(NSArray *)types;
-+ (NTFilePasteboardSource*)file:(NTFileDesc*)desc toPasteboard:(NSPasteboard *)pboard types:(NSArray *)types;
++ (NTFilePasteboardSource*)files:(NSArray<NSURL*> *)URLs toPasteboard:(NSPasteboard *)pboard types:(NSArray<NSPasteboardType> *)types;
++ (NTFilePasteboardSource*)file:(NSURL *)URL toPasteboard:(NSPasteboard *)pboard types:(NSArray<NSPasteboardType> *)types;
 
-+ (NSArray*)defaultTypes;
-+ (NSArray*)imageTypes;
++ (NSArray<NSPasteboardType>*)defaultTypes;
++ (NSArray<NSPasteboardType>*)imageTypes;
 
 @end

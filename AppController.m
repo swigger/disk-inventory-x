@@ -14,6 +14,7 @@
 @implementation AppController
 
 //@@test
+/*
 - (void)crashWithReport:(NSString *)report
 {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
@@ -25,7 +26,7 @@
     [msg setInformativeText:report];
     [msg runModal];
 }
-
+*/
 
 /*
 - (id)init;

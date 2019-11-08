@@ -17,6 +17,8 @@
 	IBOutlet NSWindow* _volumesPanel;
 	IBOutlet NSButton* _openVolumeButton;
 	IBOutlet NSArrayController *_volumesController;
+    
+    unsigned long long _maxVolumeSize; // size of largest volumes
 }
 
 + (DrivesPanelController*) sharedController;

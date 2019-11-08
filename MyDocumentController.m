@@ -11,7 +11,6 @@
 #import "Preferences.h"
 #import "PrefsPanelController.h"
 #import "FileSystemDoc.h"
-#import "DIXFinderCMInstaller.h"
 #import "AppController.h"
 
 //global variable which enables/disables logging
@@ -52,17 +51,15 @@ BOOL g_EnableLogging;
 
 - (void) openPanelDidEnd:(NSOpenPanel *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo
 {
-	if ( returnCode == NSOKButton )
+	if ( returnCode == NSModalResponseOK )
 	{
 		//open selected folders
-		NSEnumerator *fileEnum = [[sheet filenames] objectEnumerator];
-		NSString *fileName;
-		while ( (fileName = [fileEnum nextObject]) != nil )
+		for ( NSURL *fileURL in [sheet URLs] )
 		{
 			//defer it till the next loop cycle to let the sheet closes itself first
 			[[NSRunLoop currentRunLoop] performSelector:@selector(openDocumentWithContentsOfFile:)
 												 target: self
-											   argument: fileName
+                                               argument: [fileURL path]
 												  order: 1
 												  modes: [NSArray arrayWithObject: NSDefaultRunLoopMode]];
 		}
@@ -126,7 +123,7 @@ BOOL g_EnableLogging;
 - (BOOL) application: (NSApplication*) theApp openFile: (NSString*) fileName
 {
 	//if "fileName" doesn't exist or isn't a folder, return NO so that it is removed from the recent list
-	NSDictionary *attribs = [[NSFileManager defaultManager] fileAttributesAtPath: fileName traverseLink: NO];
+	NSDictionary *attribs = [[NSFileManager defaultManager] attributesOfItemAtPath: fileName error:nil];
     if ( attribs == nil || ![[attribs fileType] isEqualToString: NSFileTypeDirectory] )
 		return NO;
 
@@ -171,7 +168,7 @@ BOOL g_EnableLogging;
     NSAssert( [[NSDocumentController sharedDocumentController] isKindOfClass: [MyDocumentController class]], @"the shared DocumentController is not our custom class!" );
     
     //@@test
-    [[OAController sharedController] applicationWillFinishLaunching:notification];
+    //[[OAController sharedController] applicationWillFinishLaunching:notification];
 	
 	g_EnableLogging = [[NSUserDefaults standardUserDefaults] boolForKey: EnableLogging];
     
@@ -183,7 +180,7 @@ BOOL g_EnableLogging;
 - (void) applicationDidFinishLaunching:(NSNotification *)notification
 {
     //@@test
-    [[OAController sharedController] applicationDidFinishLaunching:notification];
+    //[[OAController sharedController] applicationDidFinishLaunching:notification];
 
     //show donate message
 	if ( ![[NSUserDefaults standardUserDefaults] boolForKey: DontShowDonationMessage] )

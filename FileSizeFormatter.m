@@ -28,15 +28,14 @@
 	
 	double dsize = [anObject doubleValue];
 	
-	NSString* units[] = {@"Bytes", @"kB", @"MB", @"GB", @"TB"};
+	static NSString* units[] = {@"Bytes", @"kB", @"MB", @"GB", @"TB"};
+    static size_t iUnitCount = sizeof(units)/sizeof(units[0]);
 	
-	unsigned i = 0;
-	while ( dsize >= 1024 && i < 5 )
-	{
-		i++;
-		
-		dsize /= 1024;
-	}
+    static double unitFactor = 1000/*1024*/;
+    
+    size_t i = 0;
+    for ( ; dsize >= unitFactor && i < (iUnitCount-1); i++ )
+		dsize /= unitFactor;
 	
 	if ( i <= 1 )
 		//Bytes, kB are displayed as integers (like the finder does)

@@ -7,11 +7,7 @@
 //
 
 #import "FSItem.h"
-#import <CocoaTechFile/NTFileDesc-Private.h>
-#import <CocoaTechFile/NTFileDescData.h>
-#import "NTFileDesc-AccessExtensions.h"
-#import "NTFileDesc-Utilities.h"
-#import "NTFSRefObject-AccessExtensions.h"
+#import "NSURL-Extensions.h"
 #import <OmniFoundation/NSMutableArray-OFExtensions.h>
 #import "NTFilePasteboardSource.h"
 
@@ -27,16 +23,6 @@ NSMutableDictionary *g_kindNameDictionary = nil;
 NSString* FSItemLoadingCanceledException = @"FSItemLoadingCanceledException";
 NSString* FSItemLoadingFailedException = @"FSItemLoadingFailedException";
 
-//this define and typedef is needed for bulk fetching
-#define kRequestCountPerIteration	( (4096 * 16) / (sizeof(FSCatalogInfo) + sizeof(FSRef) + sizeof(HFSUniStr255) + 4) )
-#define kCatalogInfoBitmapBulk (kFSCatInfoNodeFlags | kFSCatInfoVolume | kFSCatInfoParentDirID | kFSCatInfoFinderInfo | kFSCatInfoDataSizes | kFSCatInfoRsrcSizes | kFSCatInfoPermissions| kFSCatInfoAttrMod | kFSCatInfoContentMod)
-
-static struct _BulkCatalogInfoRec {
-    FSCatalogInfo catalogInfoArray[kRequestCountPerIteration];
-	FSRef fsRefArray[kRequestCountPerIteration];
-	HFSUniStr255 namesArray[kRequestCountPerIteration];
-} g_BulkCatalogInfo;
-//typedef struct _BulkCatalogInfoRec BulkCatalogInfoRec;
 
 @implementation NSString (ComparisonAdditions)
 - (NSComparisonResult) compareAsFilesystemName: (NSString*) other
@@ -49,13 +35,10 @@ static struct _BulkCatalogInfoRec {
 
 @interface FSItem(Private)
 
-- (id) initWithName: (NSString *) name
+- (id) initWithURL: (NSURL*)url
 			 parent: (FSItem*) parent
 	  setKindString: (BOOL) setKindString
-  ignoreCreatorCode: (BOOL) ignoreCreatorCode
-	usePhysicalSize: (BOOL) usePhysicalSize
-			  fsRef: (FSRef*) fsRef
-		catalogInfo: (FSCatalogInfo*) catalogInfo;
+	usePhysicalSize: (BOOL) usePhysicalSize;
 
 - (void) setParent: (FSItem*) parent;
 - (void) onParentDealloc;
@@ -63,7 +46,6 @@ static struct _BulkCatalogInfoRec {
 - (NSComparisonResult) compareSizeDescendingly: (FSItem*) other; //compares sizes
 
 - (void) loadChildrenAndSetKindStrings: (BOOL) setKindStrings
-					 ignoreCreatorCode: (BOOL) ignoreCreatorCode
 					   usePhysicalSize: (BOOL) usePhysicalSize;
 
 - (void) setSize: (NSNumber*) size;
@@ -86,16 +68,25 @@ static struct _BulkCatalogInfoRec {
 - (id) initWithPath: (NSString *) path
 {
     self = [super init];
-	
-	_type = FileFolderItem;
-	
-    g_fileCount = 0;
-    g_folderCount = 0;
-	
-	_fileDesc = [[NTFileDesc alloc] initWithPath: path];
-	
+    
+    NSURL * url = [[[NSURL alloc] initFileURLWithPath:path] autorelease];
+    
+    return [self initWithURL:url];
+}
+
+- (id) initWithURL: (NSURL *) url
+{
+    self = [super init];
+    
+    _type = FileFolderItem;
+    
+    _fileURL = [url retain];
+    
+    if ( [url isDirectory] )
+        _childs = [[NSMutableArray alloc] init];
+    
     _parent = nil; //we are the root item
-	
+    
     return self;
 }
 
@@ -149,7 +140,7 @@ static struct _BulkCatalogInfoRec {
 		[_childs release];
 	}
 	
-    [_fileDesc release];
+    [_fileURL release];
 	[_size release];
 	[_icons release];
     
@@ -168,21 +159,21 @@ static struct _BulkCatalogInfoRec {
 	return _type != FileFolderItem;
 }
 
-- (NTFileDesc *) fileDesc
+- (NSURL *) fileURL
 {
 	if ( ![self isSpecialItem] )
-		return _fileDesc;
+		return _fileURL;
 	else
-		return [[self root] fileDesc];
+		return [[self root] fileURL];
 }
 
-- (void) setFileDesc: (NTFileDesc*) desc
+- (void) setFileURL: (NSURL*) url
 {
 	NSAssert( ![self isSpecialItem], @"free and other space items don't habe a NTFileDesc object");
 	
-	[desc retain];
-	[_fileDesc release];
-	_fileDesc = desc;
+	[url retain];
+	[_fileURL release];
+	_fileURL = url;
 }
 
 /*- (unsigned) hash
@@ -211,7 +202,7 @@ static struct _BulkCatalogInfoRec {
 	switch ( [self type] )
 	{
 		case FileFolderItem:
-			return [[self fileDesc] description];
+			return [[self fileURL] description];
 		case FreeSpaceItem:
 			return @"FreeSpaceItem";
 		case OtherSpaceItem:
@@ -244,7 +235,7 @@ static struct _BulkCatalogInfoRec {
 {
 	if ( ![self isSpecialItem] )
 	{
-		return [[self fileDesc] isDirectory];
+		return [[self fileURL] cachedIsDirectory];
 	}
 	else
 		return NO;
@@ -253,7 +244,7 @@ static struct _BulkCatalogInfoRec {
 - (BOOL) isPackage
 {
 	if ( ![self isSpecialItem] )
-		return [[self fileDesc] isPackage];
+		return [[self fileURL] cachedIsPackage];
 	else
 		return NO;
 }
@@ -262,10 +253,7 @@ static struct _BulkCatalogInfoRec {
 {
 	if ( ![self isSpecialItem] )
 	{
-		//we don't use NTFileDesc.isAlias as it also return YES for a PathFinderAlias:
-		//return ([desc isSymbolicLink] || [desc isCarbonAlias] || [self isPathFinderAlias])
-		NTFileDesc *desc = [self fileDesc];
-		return ([desc isSymbolicLink] || [desc isCarbonAlias]);
+		return [[self fileURL] cachedIsAliasOrSymbolicLink];
 	}
 	else
 		return NO;
@@ -273,7 +261,7 @@ static struct _BulkCatalogInfoRec {
 
 - (BOOL) exists
 {
-	return [[self fileDesc] stillExists];
+	return [[self fileURL] stillExists];
 }
 
 - (NSImage*) iconWithSize: (unsigned) iconSize
@@ -289,10 +277,10 @@ static struct _BulkCatalogInfoRec {
 	NSImage *icon = [_icons objectForKey: key];
 	if ( icon == nil )
 	{
-		icon = [[self fileDesc] iconImageWithSize: iconSize];
-        //icon = [[NSWorkspace sharedWorkspace] iconForFile:[[self fileDesc] path]];
-		
-		if ( icon == nil )
+        icon = [[NSWorkspace sharedWorkspace] iconForFile:[[self fileURL] path]];
+        [icon setSize:NSMakeSize(iconSize, iconSize)];
+
+        if ( icon == nil )
 			icon = (id) [NSNull null];
 		
 		[_icons setObject: icon forKey: key];
@@ -377,22 +365,17 @@ static struct _BulkCatalogInfoRec {
 	}
 }
 
-//if this is a folder, load all containing files (recursively)
+//if this is a folder, load all containing files
 - (void) loadChildren
 {
-	BOOL ignoreCreatorCode = NO;
 	BOOL usePhysicalSize = NO;
 	
 	id delegate = [self delegate];
-	if ( [delegate respondsToSelector: @selector(fsItemShouldIgnoreCreatorCode:)] )
-		ignoreCreatorCode = [delegate fsItemShouldIgnoreCreatorCode: self];
-	
 	if ( [delegate respondsToSelector: @selector(fsItemShouldUsePhysicalFileSize:)] )
 		usePhysicalSize = [delegate fsItemShouldUsePhysicalFileSize: self];
 	
 	//use new optimized version of loadChilds
 	[self loadChildrenAndSetKindStrings: YES
-					  ignoreCreatorCode: ignoreCreatorCode
 						usePhysicalSize: usePhysicalSize];
 	
 	LOG (@"package check count: %d", g_packageCheckCount);
@@ -411,22 +394,13 @@ static struct _BulkCatalogInfoRec {
 
 - (unsigned long long) sizeValue
 {
-	//if this is a special item, we don't have our own NTFileDesc object
-	//(the size is just stored as a NSNumber)
-	/*
-	if ( [self isSpecialItem] )
-		return [_size unsignedLongLongValue];
-	else
-		return [_fileDesc size];
-	 */
-	
 	return _sizeValue;
 }
 
 - (void) recalculateSize: (BOOL) usePhysicalSize updateParent: (BOOL) updateParent
 {
 	unsigned long long oldSize = [self sizeValue];
-	unsigned long long size = 0;
+	UInt64 size = 0;
 	
 	switch ( [self type] )
 	{
@@ -448,21 +422,32 @@ static struct _BulkCatalogInfoRec {
 			{
 				//File
 				if ( usePhysicalSize )
-					size = [_fileDesc dataForkPhysicalSize] + [_fileDesc rsrcForkPhysicalSize];
+					size = [[[self fileURL] cachedPhysicalSize] unsignedLongLongValue];
 				else
-					size = [_fileDesc dataForkSize] + [_fileDesc rsrcForkSize];
+					size = [[[self fileURL] cachedLogicalSize] unsignedLongLongValue];
 			}
 			break;
 			
 		case FreeSpaceItem:
-			size = [NTFileDesc volumeFreeBytes: [self fileDesc]];
+            {
+                NSNumber *freeSpace = [[self fileURL] getCachedNumberValue: NSURLVolumeAvailableCapacityKey];
+                size = freeSpace == nil ? 0 : [freeSpace unsignedLongLongValue];
+            }
 			break;
 			
 		case OtherSpaceItem:
-			//the root item must has finished calculating it's size, otherwise this doesn't work
-			size = [NTFileDesc volumeTotalBytes: [self fileDesc]]
-						- [[self root] sizeValue]
-						- [NTFileDesc volumeFreeBytes: [self fileDesc]];
+            {
+                NSNumber *totalSpace = [[self fileURL] getCachedNumberValue: NSURLVolumeTotalCapacityKey];
+                NSNumber *freeSpace = [[self fileURL] getCachedNumberValue: NSURLVolumeAvailableCapacityKey];
+
+                UInt64 totalSpaceVal = totalSpace == nil ? 0 : [totalSpace unsignedLongLongValue];
+                UInt64 freeSpaceVal = freeSpace == nil ? 0 : [freeSpace unsignedLongLongValue];
+
+                //the root item must has finished calculating it's size, otherwise this doesn't work
+                size = totalSpaceVal
+                        - [[self root] sizeValue]
+                        - freeSpaceVal;
+            }
 			break;
 	}
 	
@@ -477,12 +462,10 @@ static struct _BulkCatalogInfoRec {
 {
 	if ( ![self isSpecialItem] )
 	{
-		NTFileDesc *fileDesc = [self fileDesc];
-		
-		if ( ![fileDesc isKindStringSet] )
+	    if ( _kindName == nil )
 			[self setKindString];
 		
-		return [fileDesc kindString];
+		return _kindName;
 	}
 	else
 		return @"";
@@ -496,34 +479,17 @@ static struct _BulkCatalogInfoRec {
 	if ( [delegate respondsToSelector: @selector(fsItemShouldIgnoreCreatorCode:)] )
 		ignoreCreatorCode = [delegate fsItemShouldIgnoreCreatorCode: self];
 	
-	[self setKindStringIgnoringCreatorCode: ignoreCreatorCode includeChilds: NO];
+	[self setKindStringIncludingChildren: NO];
 }
 
 //determines the kind of the file/folder as it is shown in the Finder's get info dialog.
 //This routine tries to associate certain file criteria (type, creator, extension, ..)
 //with the kind names so it can determine the kind name for similar files without asking
 //the finder again and again.
-- (void) setKindStringIgnoringCreatorCode: (BOOL) ignoreCreatorCode
-							includeChilds: (BOOL) includeChilds
+- (void) setKindStringIncludingChildren: (BOOL) includingChildren
 {
-	NTFileDesc *fileDesc = [self fileDesc];
-	id kindNameKey;
-	
-	OSType type = [fileDesc type];
-	OSType creator = [fileDesc creator];
-	NSString* extension = [fileDesc extension];
-	
-	if ( [extension length] == 0 ) 
-		extension = nil;
-
-	if ( ignoreCreatorCode )
-	{
-		//if no type code nor extension exists, we keep the creator code
-		if ( type != kLSUnknownType || extension != nil )
-			creator = kLSUnknownCreator;
-	}
-	
-	BOOL askLSCopyKindStringForTypeInfo = NO; //will be set to YES if file has type, creator or extension
+/*
+    BOOL askLSCopyKindStringForTypeInfo = NO; //will be set to YES if file has type, creator or extension
 	
 	if ( [fileDesc isVolume] )
 		kindNameKey = @".Volume";
@@ -580,7 +546,7 @@ static struct _BulkCatalogInfoRec {
 		if ( kindName != nil )
 		{
 			//remember kind name for similar files
-			[g_kindNameDictionary setObject: kindName forKey: kindNameKey];
+			[g_kindNameDictionary setObject: kindName forKey: kindNameKey];Re: DiskInventory X is not compatible with MacOS Catalina (10.15)
 			
 			[fileDesc setKindString: kindName];
 			[kindName release];
@@ -590,13 +556,35 @@ static struct _BulkCatalogInfoRec {
 	}
 	
 	[kindNameKey release];
-	
-	//let our childs do the same
-	if ( includeChilds && [self isFolder] )
+ */
+    NSString *uti = [[self fileURL] cachedUTI];
+    
+    if ( g_kindNameDictionary == nil )
+        g_kindNameDictionary = [[NSMutableDictionary alloc] init];
+
+    _kindName = [[g_kindNameDictionary objectForKey: uti] retain];
+
+    if ( _kindName == nil )
+    {
+        _kindName = (NSString*) UTTypeCopyDescription((CFStringRef)uti);
+        
+        //remember kind name for similar files
+        if ( _kindName != nil )
+            [g_kindNameDictionary setObject: _kindName forKey: uti];
+     }
+
+    if ( _kindName == nil )
+    {
+        _kindName = [[self fileURL] getCachedStringValue: NSURLLocalizedTypeDescriptionKey];
+        [_kindName retain];
+    }
+    
+    //let our childs do the same
+	if ( includingChildren && [self isFolder] )
 	{
 		unsigned i = [self childCount];
 		while ( i-- )
-			[[self childAtIndex: i] setKindStringIgnoringCreatorCode: ignoreCreatorCode includeChilds: YES];
+			[[self childAtIndex: i] setKindStringIncludingChildren: YES];
 	}
 }
 
@@ -605,7 +593,7 @@ static struct _BulkCatalogInfoRec {
 	switch ( [self type] )
 	{
 		case FileFolderItem:
-			return [[self fileDesc] name];
+			return [[self fileURL] cachedName];
 		case FreeSpaceItem:
 			return @"FreeSpaceItem";
 		case OtherSpaceItem:
@@ -621,7 +609,7 @@ static struct _BulkCatalogInfoRec {
 	if ( ![self isSpecialItem] )
 	{
 		if ( [self isRoot] ) 
-			return [[self fileDesc] path];
+			return [[self fileURL] cachedPath];
 		else
 		{
 			//parent path + "/" + name
@@ -652,7 +640,14 @@ static struct _BulkCatalogInfoRec {
 	switch ( [self type] )
 	{
 		case FileFolderItem:
-			return [[self fileDesc] displayName_fast];
+        {
+            NSString *name = [[self fileURL] cachedDisplayName];
+            if ( name == nil )
+                name = [[self fileURL] cachedName];
+            if ( name == nil )
+                name = @"";
+			return name;
+        }
 		case FreeSpaceItem:
 			return NSLocalizedString( @"free space on drive", @"" );
 		case OtherSpaceItem:
@@ -714,43 +709,44 @@ static struct _BulkCatalogInfoRec {
 
 #pragma mark -----------------pasteboard support-----------------------
 
-- (NSArray*) supportedPasteboardTypes
+- (NSArray<NSPasteboardType>*) supportedPasteboardTypes
 {
-	NSMutableArray *types = [NSMutableArray arrayWithObjects: NSFilenamesPboardType,
-																NSStringPboardType,
-																NSFileContentsPboardType,
-																NSTIFFPboardType,// we use the icon if not an image, so don't check isImage && [identifier isImage])
-																nil ];
+	NSMutableArray<NSPasteboardType> *types = [NSMutableArray arrayWithObjects: NSFilenamesPboardType,
+                                                                                NSStringPboardType,
+                                                                                NSFileContentsPboardType,
+                                                                                nil ];
 
-	NTFileTypeIdentifier* identifier = [[self fileDesc] typeIdentifier];
+    NSString * uti = [[self fileURL] cachedUTI];
 
-#define TESTTYPE( test, type ) if ( test ) [types addObject: type]
+#define TESTTYPE( test, type ) if ( [uti isEqualToString:(NSString*)test] ) [types addObject: type]
 
-	TESTTYPE( [identifier isPostscript], NSPostScriptPboardType );
-	TESTTYPE( [identifier isRTF], NSRTFPboardType );
-	TESTTYPE( [identifier isRTFD], NSRTFDPboardType );
-	TESTTYPE( [identifier isHTML], NSHTMLPboardType );
-	TESTTYPE( [identifier isPDF], NSPDFPboardType );
+	TESTTYPE( kUTTypeRTF, NSRTFPboardType );
+	TESTTYPE( kUTTypeRTFD, NSRTFDPboardType );
+	TESTTYPE( kUTTypeHTML, NSHTMLPboardType );
+	TESTTYPE( kUTTypePDF, NSPDFPboardType );
 
 #undef TESTTYPE
+    
+    // add TIFF is this is an image
+    if ( UTTypeConformsTo((__bridge CFStringRef)uti, kUTTypeImage) )
+        [types addObject: NSTIFFPboardType];
 
 	return types;
 }
 
 - (BOOL) supportsPasteboardType: (NSString*) type
 {
-	NTFileTypeIdentifier* identifier = [[self fileDesc] typeIdentifier];
+	NSString * uti = [[self fileURL] cachedUTI];
 	
 	//this if clause is derived from the code in NTFilePasteboardSource's "- (NSArray*)pasteboardTypes:(NSArray *)types"
 	return [type isEqualToString: NSFilenamesPboardType]
 			|| [type isEqualToString: NSStringPboardType]
 			|| [type isEqualToString: NSFileContentsPboardType]
-			|| ([type isEqualToString: NSPostScriptPboardType] && [identifier isPostscript])
-			|| [type isEqualToString: NSTIFFPboardType] // we use the icon if not an image, so don't check isImage && [identifier isImage])
-			|| ([type isEqualToString: NSRTFPboardType] && [identifier isRTF])
-			|| ([type isEqualToString: NSRTFDPboardType] && [identifier isRTFD])
-			|| ([type isEqualToString: NSHTMLPboardType] && [identifier isHTML])
-			|| ([type isEqualToString: NSPDFPboardType] && [identifier isPDF]);
+			|| ([type isEqualToString: NSTIFFPboardType] && UTTypeConformsTo((__bridge CFStringRef)uti, kUTTypeImage))
+			|| ([type isEqualToString: NSRTFPboardType] && [uti isEqualToString:(__bridge NSString*)kUTTypeRTF])
+			|| ([type isEqualToString: NSRTFDPboardType] && [uti isEqualToString:(__bridge NSString*)kUTTypeFlatRTFD])
+			|| ([type isEqualToString: NSHTMLPboardType] && [uti isEqualToString:(__bridge NSString*)NSHTMLPboardType])
+			|| ([type isEqualToString: NSPDFPboardType] && [uti isEqualToString:(__bridge NSString*)NSPDFPboardType]);
 }
 
 - (void) writeToPasteboard: (NSPasteboard*) pboard
@@ -760,27 +756,26 @@ static struct _BulkCatalogInfoRec {
 	
 	[pboard declareTypes:[self supportedPasteboardTypes] owner:self];
 	
-	//NSString *path = [[self fileDesc] path];
+	//NSString *path = [[self fileURL] path];
 	//NSAssert( [pboard setPropertyList:[NSArray arrayWithObject: path] forType:NSFilenamesPboardType], @"can't set pasteboard data (NSFilenamesPboardType)" );
 	//NSAssert( [pboard setString:path forType:NSStringPboardType], @"can't set pasteboard data (NSStringPboardType)" );
 }
 
 - (void) writeToPasteboard: (NSPasteboard*) pasteboard withTypes: (NSArray*) types
 {
-	[NTFilePasteboardSource file: [self fileDesc] toPasteboard: pasteboard types: types];
+	[NTFilePasteboardSource file: [self fileURL] toPasteboard: pasteboard types: types];
 }
 
 - (void)pasteboard:(NSPasteboard *)pboard provideDataForType:(NSString *)type
 {
 	LOG( @"entering FSItem.pasteboard:provideDataForType: %@", type )
 	
-	NTFileDesc* desc = [self fileDesc];
-	
-	NTFileTypeIdentifier* identifier = [desc typeIdentifier];
-	
+    NSURL *url = [self fileURL];
+    NSString *path = [url cachedPath];
+    NSString * uti = [url cachedUTI];
+
 	if ([type isEqualToString:NSFilenamesPboardType])
 	{
-		NSString *path = [desc path];
 		NSArray* pathsArray = [NSArray arrayWithObject: path];
 		
 		[pboard setPropertyList:pathsArray forType:NSFilenamesPboardType];
@@ -788,71 +783,53 @@ static struct _BulkCatalogInfoRec {
 	else if ([type isEqualToString:NSStringPboardType])
 	{
 		// set the path
-		[pboard setString:[desc path] forType:NSStringPboardType];
+		[pboard setString:path forType:NSStringPboardType];
 	}
 	else if ([type isEqualToString:NSFileContentsPboardType])
 	{
 		// write the contents
-		[pboard writeFileContents:[desc path]];
+		[pboard writeFileContents:path];
 	}
-	else if ([type isEqualToString:NSPostScriptPboardType])
-	{
-		if ([identifier isPostscript])
-			[pboard setData:[NSData dataWithContentsOfFile:[desc path]] forType:NSPostScriptPboardType];
-	}
-	else if ([type isEqualToString:NSTIFFPboardType])
-	{
-		if ([identifier isTIFF])
-			[pboard setData:[NSData dataWithContentsOfFile:[desc path]] forType:NSTIFFPboardType];
-		else if ([identifier isImage])
-		{
-			// open the image and return TIFFRepresentation
-			NSImage *image = [[[NSImage alloc] initWithContentsOfFile:[desc path]] autorelease];
-			
-			if (image)
-			{
-				NSData* data = [image TIFFRepresentation];
-				
-				if (data)
-					[pboard setData:data forType:NSTIFFPboardType];
-			}
-		}
-		else // else send the icon
-		{
-			// open the image and return TIFFRepresentation
-			NSImage* image = [NSImage iconRef:[[desc icon] iconRef] toImage:128 label:[desc label] select:NO];
-			
-			if (image)
-			{
-				NSData* data = [image TIFFRepresentation];
-				
-				if (data)
-					[pboard setData:data forType:NSTIFFPboardType];
-			}                    
-		}
-	}
+    else if ([type isEqualToString:NSTIFFPboardType])
+    {
+        if ([uti isEqualToString: (__bridge NSString *)kUTTypeTIFF])
+            [pboard setData:[NSData dataWithContentsOfFile:[url path]] forType:NSTIFFPboardType];
+        else if ( UTTypeConformsTo((__bridge CFStringRef)uti, kUTTypeImage) )
+        {
+            // open the image and return TIFFRepresentation
+            NSImage *image = [[[NSImage alloc] initWithContentsOfFile:[url path]] autorelease];
+
+            if (image)
+            {
+                NSData* data = [image TIFFRepresentation];
+
+                if (data)
+                    [pboard setData:data forType:NSTIFFPboardType];
+            }
+        }
+    }
 	else if ([type isEqualToString:NSRTFPboardType])
 	{
-		if ([identifier isRTF])
-			[pboard setData:[NSData dataWithContentsOfFile:[desc path]] forType:NSRTFPboardType];
+		if ([uti isEqualToString:(__bridge NSString*)kUTTypeRTF])
+			[pboard setData:[NSData dataWithContentsOfFile:path] forType:NSRTFPboardType];
 	}
 	else if ([type isEqualToString:NSRTFDPboardType])
 	{
-		if ([identifier isRTFD])
+		if ([uti isEqualToString:(__bridge NSString*)kUTTypeFlatRTFD])
 		{
-			NSFileWrapper *tempRTFDData = [[[NSFileWrapper alloc] initWithPath:[desc path]] autorelease];
+			NSFileWrapper *tempRTFDData = [[[NSFileWrapper alloc] initWithPath:path] autorelease];
 			[pboard setData:[tempRTFDData serializedRepresentation] forType:NSRTFDPboardType];
 		}
 	}
 	else if ([type isEqualToString:NSHTMLPboardType])
 	{
-		if ([identifier isHTML])
-			[pboard setData:[NSData dataWithContentsOfFile:[desc path]] forType:NSHTMLPboardType];
+		if ([uti isEqualToString:(__bridge NSString*)kUTTypeHTML])
+			[pboard setData:[NSData dataWithContentsOfFile:path] forType:NSHTMLPboardType];
 	}
 	else if ([type isEqualToString:NSPDFPboardType])
 	{
-		if ([identifier isPDF])
-			[pboard setData:[NSData dataWithContentsOfFile:[desc path]] forType:NSPDFPboardType];
+		if ([uti isEqualToString:(__bridge NSString*)kUTTypePDF])
+			[pboard setData:[NSData dataWithContentsOfFile:path] forType:NSPDFPboardType];
 	}
 	
 	LOG( @"    exiting FSItem.pasteboard:provideDataForType: %@", type )
@@ -864,56 +841,37 @@ static struct _BulkCatalogInfoRec {
 
 @implementation FSItem(Private)
 
-- (id) initWithName: (NSString*) name
-			 parent: (FSItem*) parent
-	  setKindString: (BOOL) setKindString
-  ignoreCreatorCode: (BOOL) ignoreCreatorCode
-	usePhysicalSize: (BOOL) usePhysicalSize
-			  fsRef: (FSRef*) fsRef
-		catalogInfo: (FSCatalogInfo *)catalogInfo
+- (id) initWithURL: (NSURL*)url
+            parent: (FSItem*) parent
+     setKindString: (BOOL) setKindString
+   usePhysicalSize: (BOOL) usePhysicalSize
 {
     self = [super init];
 	
 	_type = FileFolderItem;
     _parent = parent;	//no retain
+    
+    if ( parent != nil )
+        [parent->_childs addObject: self];
+    
     //_hash = 0;	//will be generated on demand (see FSItem.hash)
 	
-	NTFSRefObject *fsRefObject = [[NTFSRefObject alloc] initWithRef: fsRef
-													   catalogInfo: catalogInfo
-															bitmap: kCatalogInfoBitmapBulk
-															  name: name];
+    _fileURL = [url retain];
 	
-	_fileDesc = [[NTFileDesc alloc] initWithFSRefObject: fsRefObject];
-	[fsRefObject release];
-	
-	BOOL isFolder = [_fileDesc isDirectory];
+	BOOL isFolder = [_fileURL isDirectory];
 
 	if ( !isFolder )
 	{
-		//although NTFSRefObject encapsulates the FSRef and CatalogInfo structures, it does
-		//not handle size information; this is done by NSFileDescData
-		//so we need to store the size infomation in _fileDesc's cache object
-		NTFileDescData * dataCache = [_fileDesc cache];
-		
-		[dataCache setFileSize:catalogInfo->dataPhysicalSize + catalogInfo->rsrcPhysicalSize];	
-		[dataCache setPhysicalFileSize:catalogInfo->dataLogicalSize + catalogInfo->rsrcLogicalSize];
-		
-		// data fork
-		[dataCache setDataForkSize:catalogInfo->dataPhysicalSize];
-		[dataCache setDataForkPhysicalSize:catalogInfo->dataLogicalSize];
-		
-		// rsrc fork
-		[dataCache setRsrcForkSize:catalogInfo->rsrcLogicalSize];
-		[dataCache setRsrcForkPhysicalSize:catalogInfo->rsrcPhysicalSize];
-		
 		 if ( usePhysicalSize )
-			[self setSizeValue: catalogInfo->dataPhysicalSize + catalogInfo->rsrcPhysicalSize];
+			[self setSizeValue: [url physicalSize]];
 		 else
-			[self setSizeValue: catalogInfo->dataLogicalSize + catalogInfo->rsrcLogicalSize];
+			[self setSizeValue: [url logicalSize]];
 	}
+    else
+        _childs = [[NSMutableArray<FSItem*> alloc] init];
 	
 	if ( setKindString )
-		[self setKindStringIgnoringCreatorCode: ignoreCreatorCode includeChilds: NO];
+		[self setKindStringIncludingChildren: NO];
 	
     if ( isFolder )
 		g_folderCount++;
@@ -938,7 +896,6 @@ static struct _BulkCatalogInfoRec {
 }
 
 - (void) loadChildrenAndSetKindStrings: (BOOL) setKindStrings
-					 ignoreCreatorCode: (BOOL) ignoreCreatorCode
 					   usePhysicalSize: (BOOL) usePhysicalSize
 {
     if ( ![self isFolder] )
@@ -946,14 +903,14 @@ static struct _BulkCatalogInfoRec {
 	
 	id delegate = [self delegate];
 	
-	//should we cancel the loading?
-	if ( [delegate respondsToSelector: @selector(fsItemEnteringFolder:)]
-		 && ![delegate fsItemEnteringFolder: self] )
-	{
-		[NSException raise: FSItemLoadingCanceledException format: @""];
-	}
-	
-	[_childs release];
+    //should we cancel the loading?
+    if ( [delegate respondsToSelector: @selector(fsItemEnteringFolder:)]
+        && ![delegate fsItemEnteringFolder: self] )
+    {
+        [NSException raise: FSItemLoadingCanceledException format: @""];
+    }
+
+    [_childs release];
     _childs = [[NSMutableArray alloc] init];
 
     //should the kind strings of our childs should be set initially?
@@ -966,125 +923,161 @@ static struct _BulkCatalogInfoRec {
 			setKindStrings = ![self isPackage];
 		}
 	}
-	
-	NSAutoreleasePool *localAutorelasePool = nil;
-	unsigned i = 0;
-	
-    // On each iteration of the do-while loop, retrieve kRequestCountPerIteration number of catalog infos.
-	//We use the number of FSCatalogInfos that will fit in exactly four VM pages (#113).
-	//This is a good balance between the iteration I/O overhead and the risk of incurring additional I/O from additional memory allocation.
-    FSIterator iterator;
-    OSStatus result;
-	
-    result = FSOpenIterator([[self fileDesc] FSRefPtr], kFSIterateFlat, &iterator);
-    if (result == noErr)
-	{
-		while ( result == noErr )
-		{
-			ItemCount actualCount = 0;
-				
-			result = FSGetCatalogInfoBulk( iterator,
-										   kRequestCountPerIteration,
-										   &actualCount,
-										   NULL,
-										   kCatalogInfoBitmapBulk,
-										   g_BulkCatalogInfo.catalogInfoArray,
-										   g_BulkCatalogInfo.fsRefArray,
-										   NULL,
-										   g_BulkCatalogInfo.namesArray );
-			
-			if ( actualCount > 10 )
-			{
-				[localAutorelasePool release];
-				localAutorelasePool = [[NSAutoreleasePool alloc] init];
-			}
-			
-			if (result == noErr || result == errFSNoMoreItems)
-			{
-				for (i = 0; i < actualCount; i++)
-				{
-					FSItem *newChild = nil;
-					
-					const unichar *chars = (const unichar *) &g_BulkCatalogInfo.namesArray[i].unicode;
-					unsigned length = (unsigned) g_BulkCatalogInfo.namesArray[i].length;
-					
-					NSString *childName = [[NSString alloc] initWithCharacters:chars length:length];
-					
-					NS_DURING
-					{
-						newChild = [[FSItem alloc] initWithName: childName
-														 parent: self
-												  setKindString: setKindStrings
-											  ignoreCreatorCode: ignoreCreatorCode
-												usePhysicalSize: usePhysicalSize
-														  fsRef: &g_BulkCatalogInfo.fsRefArray[i]
-													catalogInfo: &g_BulkCatalogInfo.catalogInfoArray[i] ];
-						if ( newChild != nil )
-							[_childs addObject: newChild];
-						else
-							LOG( @"ignoring '%@' in '%@'", childName, [self path]);
-					}
-					NS_HANDLER
-					{
-						LOG( @"couldn't create FSItem for '%@' in '%@': %@ (%@)", childName, [self path], [localException reason], [localException name] );
-						[newChild release];
-						[childName release];
-						
-						[localException raise]; //Re-raise the exception
-					}
-					NS_ENDHANDLER
-					
-					[childName release];
-					[newChild release];
-				} //for (i = 0; i < actualCount; i++)
-										
-				[localAutorelasePool release];
-				localAutorelasePool = nil;
-					
-			} //if (result == noErr || result == errFSNoMoreItems)
-		} //while ( result == noErr )
-				
-		FSCloseIterator(iterator);
-    } //if (result == noErr)
-	else
-	{
-		LOG( @"couldn't create FSIterator for '%@': error %i", [self path], result );
-		if ( result == nsvErr ) //volume has been unmounted
-		{
-			[NSException raise: FSItemLoadingFailedException
-						format: NSLocalizedString( @"The volume has been ejected during loading of folder centents.", @"")];
-		}
-	}
-	
-	//let the new FSItems representing folders load their childs
-	unsigned long long size = 0;			
-	for ( i = 0; i < [_childs count]; i++ )
-	{
-		FSItem *child = [_childs objectAtIndex: i];
-		NTFileDesc *childDesc = [child fileDesc];
+    
+    NSArray<NSString*> *urlProperties = [NSArray<NSString*> arrayWithObjects:
+                                        //NSURLLocalizedNameKey,
+                                        NSURLNameKey,
+                                        NSURLIsVolumeKey,
+                                        NSURLIsPackageKey,
+                                        NSURLIsDirectoryKey,
+                                        //NSURLIsSymbolicLinkKey,
+                                        NSURLTypeIdentifierKey,
+                                        //NSURLLocalizedTypeDescriptionKey,
+                                        NSURLFileSizeKey,
+                                        NSURLTotalFileAllocatedSizeKey,
+                                        NSURLFileSizeKey,
+                                        NSURLTotalFileAllocatedSizeKey,
+                                        nil];
+
+    // stack of directories (Path to directory currently beeing canned)
+    NSMutableArray<FSItem*> *itemStack = [[NSMutableArray alloc] init];
+    
+    [itemStack addObject:self];
+    
+    NSDirectoryEnumerator *dirEnum = [[NSFileManager defaultManager] enumeratorAtURL: [self fileURL]
+                                                          includingPropertiesForKeys: urlProperties
+                                                                             options: 0//NSDirectoryEnumerationSkipsSubdirectoryDescendants
+                                                                        errorHandler: ^(NSURL *url, NSError *error)
+                                      {
+                                          // Handle the error.
+                                          // Return YES if the enumeration should continue after the error.
+                                          LOG(@"error listing '%@': %@", [url path], error);
+                                          // stop if there is a problem with the directory itself
+                                          if ( [url isEqualToURL: [self fileURL]])
+                                              return NO;
+                                          else
+                                              return YES;
+                                      }
+                                      ];
+    NSUInteger lastEnumLevel = 1;
+    BOOL lastItemWasDir = NO;
+    FSItem *lastDirItem = nil;
+    
+    for ( NSURL *currentUrl in dirEnum)
+    {
+        // cache all needed properties (NSURL purges all values upon next pass through the run loop)
+        [currentUrl cacheResourcesInArray: urlProperties];
         
-		if ( [childDesc isDirectory] && ![childDesc isVolume] )
-		{
-			[child loadChildrenAndSetKindStrings: setKindStrings
-							   ignoreCreatorCode: ignoreCreatorCode
-								 usePhysicalSize: usePhysicalSize];
-		}
-		
-		size += [child sizeValue];
-	}
-	
-	[self setSizeValue: size];
-	
-	[_childs sortUsingSelector: @selector(compareSizeDescendingly:)];
-	
-	[localAutorelasePool release];
-	
-	//should we cancel the loading?
-	if ( [delegate respondsToSelector: @selector(fsItemExittingFolder:)]
-		 && ![delegate fsItemExittingFolder: self] )
-	{
-		[NSException raise: FSItemLoadingCanceledException format: @""];
-	}
+        if ( [dirEnum level] > lastEnumLevel )
+        {
+#ifdef DEBUG
+            // we have entered a sub directory
+            // we expect NSDirectoryEnumerator do do a "deep first" search, so:
+            
+            NSAssert(lastItemWasDir, @"if we are now one level deeper, the last item must have been a directory");
+            NSAssert(lastDirItem == [[itemStack lastObject]->_childs lastObject], @"lastDirItem is supposed to be last item added as last child\n   last dir:            '%@'\n    last child:  '%@'",
+                     [[lastDirItem fileURL] path], [[[[itemStack lastObject]->_childs lastObject] fileURL] path]);
+            // level must be one deeper
+            NSAssert( (lastEnumLevel +1) == [dirEnum level], @"not dived into dir?? current level: %lu, last level: %lu", lastEnumLevel, [dirEnum level]);
+            
+            NSURL *lastDirUrl = [lastDirItem fileURL];
+            
+            // "item" must be immediate child of "lastDir"
+            NSAssert([currentUrl residesInDirectoryURL: lastDirUrl], @"current item is not child of last dir\n    current path: '%@'\n    current dir:  '%@'\n   last dir:            '%@'",
+                     [currentUrl path],
+                     [[currentUrl path] stringByDeletingLastPathComponent],
+                     [lastDirUrl path]);
+#endif
+            [itemStack addObject: lastDirItem];
+            
+            //should we cancel the loading?
+            if ( [delegate respondsToSelector: @selector(fsItemEnteringFolder:)]
+                && ![delegate fsItemEnteringFolder: lastDirItem] )
+            {
+                [NSException raise: FSItemLoadingCanceledException format: @""];
+            }
+        }
+        else if ([dirEnum level] < lastEnumLevel )
+        {
+            // level can be one or more steps higher
+            NSUInteger levelsWalkedUp = lastEnumLevel - [dirEnum level];
+            
+            // walk n levels up
+            for ( NSUInteger i = 0; i < levelsWalkedUp; i++ )
+            {
+                //should we cancel the loading?
+                if ( [delegate respondsToSelector: @selector(fsItemExittingFolder:)]
+                    && ![delegate fsItemExittingFolder: [itemStack lastObject]] )
+                {
+                    [NSException raise: FSItemLoadingCanceledException format: @""];
+                }
+
+                [itemStack removeLastObject];
+            }
+            
+#ifdef DEBUG
+            // .. and check whether the current url resides in that directory
+            NSURL *directoryURLExpected = [[itemStack lastObject] fileURL];
+            
+            // "currentUrl" must be immediate child of "directoryURLExpected"
+            NSAssert([currentUrl residesInDirectoryURL: directoryURLExpected], @"current item is not child of last dir\n    current path: '%@'\n    current dir:  '%@'\n   dir expected:            '%@'",
+                     [currentUrl path],
+                     [[currentUrl path] stringByDeletingLastPathComponent],
+                     [directoryURLExpected path]);
+#endif
+        }
+        else
+        {
+#ifdef DEBUG
+            // "item" must be immediate child of current directory
+            NSAssert([currentUrl residesInDirectoryURL: [[itemStack lastObject] fileURL]], @"current item is not child of last dir\n    current path: '%@'\n    current dir:  '%@'\n   last dir:            '%@'",
+                     [currentUrl path],
+                     [[currentUrl path] stringByDeletingLastPathComponent],
+                     [[[itemStack lastObject] fileURL] path]);
+#endif
+        }
+        
+        FSItem *currentItem = [[FSItem alloc] initWithURL: currentUrl
+                                                   parent: [itemStack lastObject]
+                                            setKindString: setKindStrings
+                                          usePhysicalSize: usePhysicalSize];
+        
+        if ( [currentUrl isFirmlink] )
+        {
+            // tests show that firmlinks are not followed by NSDirectoryEnumerator, but
+            // Apple tends to change thinks so we tell the enumerator to not enter the directory
+            [dirEnum skipDescendants];
+            [currentItem loadChildrenAndSetKindStrings: setKindStrings
+                                       usePhysicalSize: usePhysicalSize];
+        }
+        else if ( [currentUrl isVolume] )
+        {
+            // on 10.15 Beta 7 the mount point /System/Volume/data is followed,
+            // although this should not be the case according to the docs
+            [dirEnum skipDescendants];
+        }
+        
+        lastItemWasDir = [currentUrl isDirectory];
+        
+        lastDirItem = lastItemWasDir ? currentItem : nil;
+        
+        lastEnumLevel = [dirEnum level];
+        
+        [currentItem release];
+    }
+ 
+    // signal exiting of remaining folders
+    for ( FSItem * stackItem in [itemStack reverseObjectEnumerator] )
+    {
+        //should we cancel the loading?
+        if ( [delegate respondsToSelector: @selector(fsItemExittingFolder:)]
+            && ![delegate fsItemExittingFolder: stackItem] )
+        {
+            [NSException raise: FSItemLoadingCanceledException format: @""];
+        }
+     }
+    
+	[self recalculateSize:YES updateParent:NO];
 }
 
 //compare the size of 2 FSItems
@@ -1117,24 +1110,6 @@ static struct _BulkCatalogInfoRec {
 
 - (void) setSizeValue: (unsigned long long) newSize
 {
-	//NTFileDesc keeps the size as a 'long long' and FSItems as a NSNumber object for key-value-coding
-	//(if this is a special item, we don't set the size in our NTFileDesc object, as this
-	//points to the root's NTFileDesc! (see FSItem.fileDesc))
-/*
-	if ( ![self isSpecialItem] )
-	{
-		[[self fileDesc] setSize: newSize];
-		[_size release];
-		_size = nil;
-	}
-	else
-	{
-		NSNumber *size = [[NSNumber alloc] initWithUnsignedLongLong: newSize];
-		[self setSize: size];
-		[size release];
-	}
- */
-	
 	_sizeValue = newSize;
 	[_size release];
 	_size = nil;

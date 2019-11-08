@@ -5,11 +5,10 @@
 #ifdef __OBJC__
     #import <Cocoa/Cocoa.h>
     #import <Carbon/Carbon.h>
-	//#import <QTKit/QTKit.h> //needed by CocoatechCore.h
-  	#import <CocoaTechCore/CocoatechCore.h>
-	#import <CocoaTechFile/CocoatechFile.h>
 
-	#import <OmniBase/OmniBase.h>
+    #import <OmniBase/OmniBase.h>
+
+    #import <CocoaTechStrings/CocoaTechStrings.h>
 
 	//global variable which enables/disables logging
 	extern BOOL g_EnableLogging;

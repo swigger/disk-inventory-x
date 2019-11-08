@@ -10,20 +10,20 @@
 
 
 @interface AppsForItem : NSObject {
-	NTFileDesc *_defaultAppDesc;
-	NSMutableArray *_additionalAppDescs;
-	NTFileDesc *_itemDesc; //file/folder for which to search for applications
+	NSURL *_defaultAppURL;
+	NSMutableArray<NSURL*> *_additionalAppURLs;
+	NSURL *_itemURL; //file/folder for which to search for applications
 }
 
-+ (id) appsForItemDesc: (NTFileDesc*) item;
-- (id) initWithItemDesc: (NTFileDesc*) item;
++ (id) appsForItemURL: (NSURL*) url;
+- (id) initWithItemURL: (NSURL*) url;
 
-- (NTFileDesc*) defaultAppDesc; //may return nil
-- (NSArray*) additionalAppDescs; //may return empty array (but never nil)
+- (NSURL*) defaultAppURL; //may return nil
+- (NSArray<NSURL*>*) additionalAppURLs; //may return empty array (but never nil)
 
-- (NTFileDesc*) itemDesc;
+- (NSURL*) itemURL;
 
-- (void) openItemWithAppDesc: (NTFileDesc*) appDesc;
-+ (void) openItemDesc: (NTFileDesc*) item withAppDesc: (NTFileDesc*) appDesc;
+- (void) openItemWithAppURL: (NSURL*) appDesc;
++ (void) openItemURL: (NSURL*) item withAppURL: (NSURL*) appDesc;
 
 @end

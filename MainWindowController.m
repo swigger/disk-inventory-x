@@ -11,12 +11,10 @@
 #import "Timing.h"
 #import <TreeMapView/TreeMapView.h>
 #import "FSItem-Utilities.h"
-#import "NTFileDesc-Utilities.h"
 #import "FileSizeTransformer.h"
-#import <CocoaTechStrings/NTLocalizedString.h>
-#import "NTDefaultDirectory-Utilities.h"
 #import "AppsForItem.h"
 #import <OmniFoundation/NSString-OFExtensions.h>
+#import "NSURL-Extensions.h"
 
 @interface MainWindowController(Private)
 - (void) moveToTrashSheetDidDismiss: (NSWindow*) sheet returnCode: (int) returnCode contextInfo: (void*) contextInfo;
@@ -135,12 +133,12 @@
 	NSMenuItem *menuItem = (NSMenuItem*) sender;
 	
 	FSItem *selectedItem = [(FileSystemDoc*)[self document] selectedItem];
-	NTFileDesc *appDesc = [menuItem representedObject];
+	NSURL *appURL = [menuItem representedObject];
 	
-	if ( appDesc == nil )
-		appDesc = [[AppsForItem appsForItemDesc: [selectedItem fileDesc]] defaultAppDesc];
+	if ( appURL == nil )
+		appURL = [[AppsForItem appsForItemURL: [selectedItem fileURL]] defaultAppURL];
 	
-	[AppsForItem openItemDesc: [selectedItem fileDesc]withAppDesc: appDesc];
+	[AppsForItem openItemURL: [selectedItem fileURL] withAppURL: appURL];
 }
 
 - (IBAction) zoomIn:(id)sender
@@ -229,7 +227,7 @@
 	//if file/folder lies on a network volume, it will be deleted!
 	//So warn the user and ask to proceed.
 	//(only local items can be moved to trash)
-	if ( [[selectedItem fileDesc] isNetwork] )
+	if ( ![[selectedItem fileURL] isLocalVolume] )
 	{
 		NSString *msg = [NSString stringWithFormat: [NTLocalizedString localize: @"The item \"%@\" could not be moved to the trash."],
 													[selectedItem displayName]];
@@ -373,8 +371,8 @@
         if ( selectedItem == nil )
 			NO;
 		
-		AppsForItem *apps = [AppsForItem appsForItemDesc: [selectedItem fileDesc]];
-		return [apps defaultAppDesc] != nil;
+		AppsForItem *apps = [AppsForItem appsForItemURL: [selectedItem fileURL]];
+		return [apps defaultAppURL] != nil;
     }
     else if ( menuAction == @selector(zoomIn:) )
     {
@@ -395,11 +393,13 @@
 		BOOL selectItemResidesInTrash = NO;
 		if ( selectedItem != nil )
 		{
-			NTFileDesc *trashDesc = [[NTDefaultDirectory sharedInstance] safeTrashForDesc: [selectedItem fileDesc]];
-			if ( [trashDesc isValid] )
+            NSURL *selectedURL = [selectedItem fileURL];
+
+            NSURL *trashURL = [[NSFileManager defaultManager] URLForDirectory:NSTrashDirectory inDomain:NSUserDomainMask appropriateForURL:selectedURL create:NO error:nil];
+            
+			if ( trashURL != nil )
 			{
-				FSItem* trashItem = [[doc rootItem] findItemByAbsolutePath: [trashDesc path] allowAncestors: NO];
-				selectItemResidesInTrash = trashItem == selectedItem || [selectedItem isDescendantOf: trashItem];
+                selectItemResidesInTrash = [selectedURL isEqualToURL: trashURL] || [selectedURL residesInDirectoryURL:trashURL];
 			}
 		}
         return !selectItemResidesInTrash && selectedItem != nil && selectedItem != [doc zoomedItem] && ![selectedItem isSpecialItem];
@@ -415,7 +415,7 @@
     else if ( menuAction == @selector(showOtherSpace:) )
     {
         SET_TITLE_AND_IMAGE( [doc showOtherSpace], @"Hide Other Space", @"Show Other Space" );
-		if ( [[[doc zoomedItem] fileDesc] isVolume] )
+		if ( [[[doc zoomedItem] fileURL] isVolume] )
 			return NO;
     }
     else if ( menuAction == @selector(showPhysicalSizes:) )
@@ -499,12 +499,12 @@
 	if ( selectedItem == nil )
 		return;
 	
-	AppsForItem *apps = [AppsForItem appsForItemDesc: [selectedItem fileDesc]];
+	AppsForItem *apps = [AppsForItem appsForItemURL: [selectedItem fileURL]];
 	
 	NSMenuItem *menuItem = nil;
-	NTFileDesc *appDesc = [apps defaultAppDesc];
+	NSURL *appURL = [apps defaultAppURL];
 	
-	if (  appDesc != nil )
+	if ( appURL != nil )
 	{
 		//the first and second menu item is the default app and a serperator item
 		if ( [_openWithSubMenu numberOfItems] == 0 )
@@ -515,35 +515,42 @@
 
 		menuItem = [_openWithSubMenu itemAtIndex: 0];
 		
-		[menuItem setTitle: [appDesc displayName]];
-		[menuItem setToolTip: [appDesc displayPath]];
-		[menuItem setImage: [appDesc iconImageWithSize: 16]];  
-		[menuItem setRepresentedObject: appDesc];  
-		[menuItem setTarget: self];
-		[menuItem setAction: @selector(openFile:)];
-	
-		NSArray *appDescs = [apps additionalAppDescs];
-		unsigned i;
-		for ( i = 0; i < [appDescs count]; i++ )
+		[menuItem setTitle:             [appURL displayName]];
+		[menuItem setToolTip:           [appURL displayPath]];
+		[menuItem setRepresentedObject: appURL];
+		[menuItem setTarget:            self];
+		[menuItem setAction:            @selector(openFile:)];
+        // set icon
+        {
+            NSImage *icon = [appURL icon];
+            [icon setSize:NSMakeSize(16,16)];
+            [menuItem setImage: icon];
+        }
+        
+		NSArray<NSURL*> *appURLs = [apps additionalAppURLs];
+		for ( unsigned i = 0; i < [appURLs count]; i++ )
 		{
 			unsigned menuItemIndex = i+2;
 			if ( menuItemIndex >= ((unsigned) [_openWithSubMenu numberOfItems]) )
 				[_openWithSubMenu addItem: [[[NSMenuItem alloc] init] autorelease]];
 			
 			menuItem = [_openWithSubMenu itemAtIndex: menuItemIndex];
-			appDesc = [appDescs objectAtIndex: i];
+			appURL = [appURLs objectAtIndex: i];
 			
-			[menuItem setTitle: [appDesc displayName]];  
-			[menuItem setToolTip: [appDesc displayPath]];
-			[menuItem setImage: [appDesc iconImageWithSize: 16]];  
-			[menuItem setRepresentedObject: appDesc];
-			[menuItem setTarget: self];
-			[menuItem setAction: @selector(openFile:)];
+			[menuItem setTitle:             [appURL displayName]];
+			[menuItem setToolTip:           [appURL displayPath]];
+			[menuItem setRepresentedObject: appURL];
+			[menuItem setTarget:            self];
+			[menuItem setAction:            @selector(openFile:)];
+            
+            NSImage *icon = [appURL icon];
+            [icon setSize:NSMakeSize(16,16)];
+            [menuItem setImage: icon];
 		}
 	}
 	
 	//remove any supernumerary menu items (removed all items if is there is no app which can open this file)
-	unsigned removeMenuItemsFromIndex = ([apps defaultAppDesc] != nil) ? [[apps additionalAppDescs] count] +2 : 0;
+	unsigned removeMenuItemsFromIndex = ([apps defaultAppURL] != nil) ? [[apps additionalAppURLs] count] +2 : 0;
 	
 	while ( ((unsigned) [_openWithSubMenu numberOfItems]) > removeMenuItemsFromIndex )
 		[_openWithSubMenu removeItemAtIndex: [_openWithSubMenu numberOfItems] -1];
@@ -624,10 +631,17 @@
 	else
 	{
 		//failed
-		[NTSimpleAlert infoSheet: [self window]
-						 message: [NSString stringWithFormat: NSLocalizedString(@"\"%@\" cannot be moved to the trash.",@""), [selectedItem displayName] ]
-					  subMessage: NSLocalizedString( @"Maybe you do not have sufficient access privileges.", @"" ) ];
-	}
+        NSString *msg = [NSString stringWithFormat: NSLocalizedString(@"\"%@\" cannot be moved to the trash.",@""), [selectedItem displayName] ];
+        NSString *subMsg = NSLocalizedString( @"Maybe you do not have sufficient access privileges.", @"" );
+        
+        NSBeginInformationalAlertSheet( msg,
+                                       [NTLocalizedString localize:@"OK" table:@"CocoaTechBase"],
+                                       nil, nil,
+                                       [self window],
+                                       nil, NULL, NULL, nil,
+                                       @"%@",
+                                       subMsg );
+ 	}
 }
 
 @end

@@ -8,30 +8,31 @@
 
 #import "AppsForItem.h"
 #import <OmniFoundation/NSMutableArray-OFExtensions.h>
+#import "NSURL-Extensions.h"
 
 @interface AppsForItem(Private)
 
-+ (NSArray*)applicationURLsForItemURL:(NSURL*)inItemURL;
-- (BOOL) checkAppDesc: (NTFileDesc*) appDesc checkDefaultApp: (BOOL) checkDefApp;
++ (NSArray<NSURL*>*)applicationURLsForItemURL:(NSURL*)inItemURL;
+- (BOOL) checkAppURL: (NSURL*) appURL checkDefaultApp: (BOOL) checkDefApp;
 
 @end
 
 
 @implementation AppsForItem
 
-+ (id) appsForItemDesc: (NTFileDesc*) item
++ (id) appsForItemURL: (NSURL*) url
 {
-	AppsForItem *appsForFile = [[[self class] alloc] initWithItemDesc: item];
+	AppsForItem *appsForFile = [[[self class] alloc] initWithItemURL: url];
 		
 	return [appsForFile autorelease];
 }
 
-- (id) initWithItemDesc: (NTFileDesc*) item
+- (id) initWithItemURL: (NSURL*) url
 {
 	self = [super init];
 	if ( self != nil )
 	{
-		_itemDesc = [[item newDesc] retain];
+		_itemURL = [url retain];
 	}
 	
 	return self;
@@ -39,102 +40,96 @@
 
 - (void) dealloc
 {
-	[_itemDesc release];
-	[_defaultAppDesc release];
-	[_additionalAppDescs release];	
+	[_itemURL release];
+	[_defaultAppURL release];
+	[_additionalAppURLs release];
 	
 	[super dealloc];
 }
 
-- (NTFileDesc*) defaultAppDesc //may return nil
+- (NSURL*) defaultAppURL //may return nil
 {
-	if ( _defaultAppDesc == nil )
+	if ( _defaultAppURL == nil )
 	{
-		_defaultAppDesc = (id) [NSNull null]; //retain not necessary for NSNull
+		_defaultAppURL = (id) [NSNull null]; //retain not necessary for NSNull
 		
 		LSRolesMask RoleMask = kLSRolesViewer | kLSRolesEditor;
-		FSRef appRef;
-		if ( LSGetApplicationForItem( [[self itemDesc] FSRefPtr], RoleMask, &appRef, NULL ) == noErr )
-		{
-			NTFileDesc *appDesc = [NTFileDesc descFSRef: &appRef];
-			if ( [self checkAppDesc: appDesc checkDefaultApp: NO] )
-				_defaultAppDesc = [appDesc retain];
-		}
+
+        NSURL *appURL = (NSURL*)LSCopyDefaultApplicationURLForURL( (CFURLRef)[self itemURL], RoleMask, nil );
+        
+		if ( [self checkAppURL: appURL checkDefaultApp: NO] )
+			_defaultAppURL = appURL;
+        else
+            [appURL release];
 	}
 	
-	return (_defaultAppDesc == (id)[NSNull null]) ? nil : _defaultAppDesc;
+	return (_defaultAppURL == (id)[NSNull null]) ? nil : _defaultAppURL;
 }
 
-- (NSArray*) additionalAppDescs //may return empty array (but never nil)
+- (NSArray<NSURL*>*) additionalAppURLs //may return empty array (but never nil)
 {
-	if ( _additionalAppDescs == nil )
+	if ( _additionalAppURLs == nil )
 	{
-		NSURL *itemURL = [[self itemDesc] URL];
-		NSArray *appURLs = [[self class] applicationURLsForItemURL: itemURL];
+		NSURL *itemURL = [self itemURL];
+		NSArray<NSURL*> *appURLs = [[self class] applicationURLsForItemURL: itemURL];
 		
-		//fill an array of NTFileDesc objects for the array of URLs 
-		_additionalAppDescs = [[NSMutableArray alloc] initWithCapacity: [appURLs count]];
-		unsigned i = 0;
-		for ( i = 0; i < [appURLs count]; i++ )
+		_additionalAppURLs = [[NSMutableArray<NSURL*> alloc] initWithCapacity: [appURLs count]];
+		for ( NSURL *appURL in appURLs )
 		{
-			NSURL *appURL = [appURLs objectAtIndex: i];
-			if ( [appURL isFileURL] )
-			{
-				NTFileDesc *appDesc = [NTFileDesc descNoResolve: [appURL path]];
-				if ( [self checkAppDesc: appDesc checkDefaultApp: YES] )
-					[_additionalAppDescs addObject: appDesc];
+			if ( [appURL isFileURL]
+                && [self checkAppURL: appURL checkDefaultApp: YES] )
+            {
+                [_additionalAppURLs addObject: appURL];
 			}
 		}
 		
-		[_additionalAppDescs sortOnAttribute: @selector(name) usingSelector: @selector(caseInsensitiveCompare:)];
+		[_additionalAppURLs sortOnAttribute: @selector(name) usingSelector: @selector(caseInsensitiveCompare:)];
 	}
 	
-	return _additionalAppDescs;
+	return _additionalAppURLs;
 }
 
-- (NTFileDesc*) itemDesc
+- (NSURL*) itemURL
 {
-	return _itemDesc;
+	return _itemURL;
 }
 
-- (void) openItemWithAppDesc: (NTFileDesc*) appDesc
+- (void) openItemWithAppURL: (NSURL*) appURL
 {
-	[[self class] openItemDesc: [self itemDesc] withAppDesc: appDesc];
+	[[self class] openItemURL: [self itemURL] withAppURL: appURL];
 }
 
-+ (void) openItemDesc: (NTFileDesc*) itemDesc withAppDesc: (NTFileDesc*) appDesc
++ (void) openItemURL: (NSURL*) itemURL withAppURL: (NSURL*) appURL
 {
-	[[NSWorkspace sharedWorkspace] openFile: [itemDesc path] withApplication: [appDesc path]];
+	[[NSWorkspace sharedWorkspace] openFile: [itemURL path] withApplication: [appURL path]];
 }
 
 @end
 
 @implementation AppsForItem(Private)
 
-- (BOOL) checkAppDesc: (NTFileDesc*) appDesc checkDefaultApp: (BOOL) checkDefApp
+- (BOOL) checkAppURL: (NSURL*) appURL checkDefaultApp: (BOOL) checkDefApp
 {
-	if ( appDesc == nil )
+	if ( appURL == nil )
 		return NO;
 	
-	NTFileDesc *itemDesc = [self itemDesc];
-	
-	if ( checkDefApp && [appDesc isEqualToDesc: [self defaultAppDesc]] )
+	if ( checkDefApp && [appURL isEqualToURL: [self defaultAppURL]] )
 		return NO;
 	
-	BOOL isDIX = [[appDesc name] isEqualToString: @"Disk Inventory X.app"];
-	BOOL isFinder = [[appDesc name] isEqualToString: @"Finder.app"];
+	BOOL isDIX = [[appURL name] isEqualToString: @"Disk Inventory X.app"];
+	BOOL isFinder = [[appURL name] isEqualToString: @"Finder.app"];
 	
 	//filter out the Finder (for simple folders, the Finder is returned by "LSGetApplicationForItem" and "LSCopyApplicationURLsForURL")
 	//it would be better to identify the Finder by it's bundle identifier, but then we would have to load it's bundle (?)
 	return !isDIX
-			&& ( [itemDesc isFile]
-				 || [itemDesc isPackage] 
+			&& ( [appURL isFile]
+				 || [appURL isPackage] 
 				 || !isFinder );
 }
 
 // get a list of apps that can open a document
 // NOTE: this searches network volumes!!
-+ (NSArray*) applicationURLsForItemURL:(NSURL*)inItemURL;
++ (NSArray<NSURL*>*) applicationURLsForItemURL:(NSURL*)inItemURL;
 {
     CFArrayRef outURLs;
     NSMutableArray* result=nil;
@@ -154,7 +149,7 @@
             {
                 url = [result objectAtIndex:i];
                 
-                if ([[[url path] pathExtension] isEqualToStringCaseInsensitive:@"exe"])
+                if ([[[url path] pathExtension] caseInsensitiveCompare:@"exe"] == NSOrderedSame)
                     [result removeObjectAtIndex:i];
             }            
         }
