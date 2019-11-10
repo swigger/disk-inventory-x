@@ -1077,6 +1077,8 @@ NSString* FSItemLoadingFailedException = @"FSItemLoadingFailedException";
         }
      }
     
+    [itemStack release];
+    
 	[self recalculateSize:YES updateParent:NO];
 }
 
