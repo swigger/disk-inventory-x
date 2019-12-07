@@ -23,8 +23,58 @@ NSString *UseSmallFontInSelectionList	= @"UseSmallFontInSelectionList";
 NSString *SplitWindowHorizontally		= @"SplitWindowHorizontally";
 NSString *AnimatedZooming				= @"AnimatedZooming";
 NSString *EnableLogging					= @"EnableLogging";
-NSString *DontShowDonationMessage		= @"DontShowDonationMessage";
+NSString *DontShowDonationMessage        = @"DontShowDonationMessage";
+NSString *DontShowPrivacyWarningMessage        = @"DontShowPrivacyWarningMessage";
 NSString *ShareKindColors				= @"ShareKindColors";
+
+
+#pragma mark ----------------- NSUserDefaults(VersionDepedantValues) -------------------
+
+@implementation NSUserDefaults(VersionDepedantValues)
+
+- (NSString*) mainBundleVersion
+{
+    static NSString * _bundleVersion = nil;
+    if ( _bundleVersion == nil )
+    {
+        NSBundle *bundle = [NSBundle mainBundle];
+        
+        NSArray *keys = [NSArray arrayWithObjects: @"CFBundleShortVersionString", @"CFBundleGetInfoString", nil];
+        NSDictionary *dict = [bundle infoDictionary];
+                         
+         for ( int i = 0;
+              i < [keys count]
+             && (_bundleVersion == nil || [_bundleVersion length] == 0);
+             i++)
+         {
+             _bundleVersion = [dict objectForKey:[keys objectAtIndex:i]];
+         }
+    }
+    return _bundleVersion == nil ? @"" : _bundleVersion;
+}
+
+- (NSString*) versionDependantKeyForKey: (NSString*) key
+{
+    NSString *mainBundleVer = [self mainBundleVersion];
+    
+    return [mainBundleVer length] > 0
+            ? [key stringByAppendingFormat:@" v%@", mainBundleVer]
+            : key;
+}
+
+- (bool) boolForVersionDependantKey: (NSString*) key
+{
+    return [self boolForKey:[self versionDependantKeyForKey:key]];
+}
+
+- (void) setBool: (BOOL) val forVersionDependantKey: (NSString*) key
+{
+    [self setBool: val forKey:[self versionDependantKeyForKey:key]];
+}
+
+@end
+
+#pragma mark ----------------- NSMutableDictionary(PreferencesValues) -------------------
 
 @interface NSMutableDictionary(DocumentPreferences_Private)
 - (void) copyValuesFromSharedDefaults;

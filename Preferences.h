@@ -22,7 +22,15 @@ extern NSString *SplitWindowHorizontally;
 extern NSString *AnimatedZooming;
 extern NSString *EnableLogging;
 extern NSString *DontShowDonationMessage;
+extern NSString *DontShowPrivacyWarningMessage;
 extern NSString *ShareKindColors;
+
+@interface NSUserDefaults(VersionDepedantValues)
+
+- (bool) boolForVersionDependantKey: (NSString*) key;
+- (void) setBool: (BOOL) val forVersionDependantKey: (NSString*) key;
+
+@end
 
 @interface NSMutableDictionary(DocumentPreferences)
 

@@ -55,6 +55,13 @@
 /*"all files" item in kinds popup button*/
 "(all kinds)" = "(all kinds)";
 
+/* warning before accessing private files */
+"Some folders which will be scanned contain private files. The access is protected by the macOS privacy protection.\n\nUpon first access macOS will ask whether you allow Disk Inventory X access to these folders and files.\n\nDisk Inventory X does not read any data - just information like file sizes and types is collected." = "Some folders which will be scanned contain private files. The access is protected by the macOS privacy protection.\n\nUpon first access macOS will ask whether you allow Disk Inventory X access to these folders and files.\n\nDisk Inventory X does not read any data - just information like file sizes and types is collected.";
+
+"You can change the access settings in the System Preferences (Security/Privacy)."="You can change the access settings in the System Prefences (Security/Privacy).";
+
+"Do not show this information again." = "Do not show this information again.";
+
 /*strings for the Finder CM preference page*/
 "The Finder plugin is not installed. Click 'Install' to install it on your computer." = "The Finder plugin is not installed. Click 'Install' to install it on your computer.";
 "A newer version (%@) is installed." = "A newer version (%@) is installed.";

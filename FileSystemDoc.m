@@ -15,6 +15,7 @@
 #import "InfoPanelController.h"
 #import "FSItem-Utilities.h"
 #import <OmniFoundation/NSArray-OFExtensions.h>
+#import "NSFileManager-Extensions.h"
 
 NSString *CollectFileKindStatisticsCanceledException = @"CollectFileKindStatisticsCanceledException";
 
@@ -226,8 +227,45 @@ NSString *OldItem = @"OldItem";
     // Add any code here that needs to be executed once the windowController has loaded the document's window.
 }
 
+- (void)checkForProtectedFolders:(NSString * _Nonnull)folder
+{
+    NSFileManager *fileMgr = [NSFileManager defaultManager];
+    NSArray<NSURL*> *protectedFolders = [fileMgr privacyProtectedFoldersInURL:[NSURL fileURLWithPath:folder]];
+    if ( [protectedFolders count] > 0 )
+    {
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        if ( ![defaults boolForVersionDependantKey: DontShowPrivacyWarningMessage] )
+        {
+            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            
+            alert.alertStyle = NSAlertStyleInformational;
+            
+            alert.messageText = NSLocalizedString(@"Some folders which will be scanned contain private files. The access is protected by the macOS privacy protection.\n\nUpon first access macOS will ask whether you allow Disk Inventory X access to these folders and files.\n\nDisk Inventory X does not read any data - just information like file sizes and types is collected.", @"");
+            alert.informativeText = NSLocalizedString(@"You can change the access settings in the System Preferences (Security/Privacy).", @"");
+            
+            alert.showsSuppressionButton = YES;
+            alert.suppressionButton.title = NSLocalizedString(@"Do not show this information again.", @"");
+            
+            [alert runModal];
+            
+            if (alert.suppressionButton.state == NSOnState)
+            {
+                // Suppress this alert for the current version
+                [defaults setBool: YES forVersionDependantKey: DontShowPrivacyWarningMessage];
+            }
+            
+            // let the alert disappear before the consent dialogs pop up
+            [[NSRunLoop currentRunLoop] runUntilDate: [NSDate date]];
+        }
+        
+        [fileMgr triggerConsentDialogForPrivacyProtectedFolders:protectedFolders];
+    }
+}
+
 - (BOOL) readFromFile: (NSString *) folder ofType: (NSString *) docType
 {
+    [self checkForProtectedFolders:folder];
+    
     //now the real work: loading the folder contents
     @try
     {
@@ -470,6 +508,8 @@ NSString *OldItem = @"OldItem";
 		
 		if ( trashItem != nil )
             prevTrashContents = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:trashURL includingPropertiesForKeys:[NSArray array] options:0 error:nil];
+        
+        
 	}
 	
 	//move file/folder to trash

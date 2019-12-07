@@ -226,7 +226,7 @@
 		
 		NSURL *vol = [[_volumes objectAtIndex: i] objectForKey : @"volume"];
         
-        if ( [vol getBoolValue: NSURLVolumeSupportsVolumeSizesKey] )
+        if ( [vol getCachedBoolValue: NSURLVolumeSupportsVolumeSizesKey] )
         {
             double totalBytes = [[vol volumeTotalCapacity] doubleValue];
             double freeBytes = [[vol volumeAvailableCapacity] doubleValue];
@@ -293,9 +293,12 @@
         NSURL *volURL = [[_volumes objectAtIndex: row] objectForKey : @"volume"];
         if ( [volURL getCachedBoolValue: NSURLVolumeSupportsVolumeSizesKey] )
         {
-            double factor = fmax([[volURL cachedVolumeTotalCapacity] doubleValue] / (double)_maxVolumeSize, 0.1);
-            cellRect.size.width *= factor;//[[volURL cachedVolumeTotalCapacity] doubleValue] / (double)_maxVolumeSize;
+            double fraction = [[volURL cachedVolumeTotalCapacity] doubleValue] / (double)_maxVolumeSize;
+            // each volume should at least be shown as 20% of the available space as it would be shown as too narrow (or not at all) otherwise
+            cellRect.size.width *= fmax(fraction, 0.2);
         }
+        else
+            cellRect.size.width = 0; //no size information available; hide progress indicator
         
 		[progrInd setFrame: cellRect];
 		[progrInd stopAnimation: nil];

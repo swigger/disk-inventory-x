@@ -7,7 +7,6 @@
   sure what affect this might have on its behavior, if you are
   letting the system provide the functionality for this item.
 - apple-delete as shortcut for move-to-trash.
-- nicer icon: http://www.macmerc.com/sections.php?op=viewarticle&artid=70&page=1
 - sortable columns in the Finder view
 
 - interesting approaches representing directories:

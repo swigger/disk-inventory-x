@@ -30,7 +30,7 @@ BOOL g_EnableLogging;
 //	if ( ![[DrivesPanelController sharedController] panelIsVisible] )
 	{
 		//volumes panel isn't (yet) loaded, so show the open panel the normal way (as a modal window)
-		return [openPanel runModalForTypes: nil];
+		return [openPanel runModal];
 	}
 /*	else
 	{
@@ -96,16 +96,14 @@ BOOL g_EnableLogging;
 {
 	//we implement this method by ourself, so we can avoid that stupid message "document couldn't be opened"
 	//in the case the user canceled the opening
-	NSArray *fileNames = [self fileNamesFromRunningOpenPanel];
+	NSArray<NSURL *> *fileNames = [self URLsFromRunningOpenPanel];
 	
 	if ( fileNames == nil )
 		return; //cancel pressed in open panel
 	
-	NSEnumerator *enumerator = [fileNames objectEnumerator];
-	NSString *fileName;
-	while ( (fileName = [enumerator nextObject]) != nil )
+	for ( NSURL *dir in fileNames )
 	{
-		[self openDocumentWithContentsOfFile: fileName display: YES];
+		[self openDocumentWithContentsOfFile: [dir path] display: YES];
 	}
 }
 

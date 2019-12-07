@@ -80,29 +80,39 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.3b</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>DIX </string>
 	<key>CFBundleVersion</key>
-	<string>1.3 beta</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSCalendarsUsageDescription</key>
-	<string>Disk Inventory X needs to access calendar files to inspect their sizes and other file attributes.</string>
+	<string>Disk Inventory X needs to access calendar files to inspect their sizes and other file attributes.\nNo data will be read.</string>
 	<key>NSContactsUsageDescription</key>
-	<string>Disk Inventory X needs to access address book files to inspect their sizes and other file attributes.</string>
+	<string>Disk Inventory X needs to access address book files to inspect their sizes and other file attributes.\nNo data will be read.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Disk Inventory X needs to access photo libraries to inspect their sizes and other file attributes.</string>
+	<string>Disk Inventory X needs to access photo libraries to inspect their sizes and other file attributes.\nNo data will be read.</string>
 	<key>NSPrincipalClass</key>
 	<string>OAApplication</string>
 	<key>NSRemindersUsageDescription</key>
-	<string>Disk Inventory X needs to access reminders to inspect their sizes and other file attributes.</string>
+	<string>Disk Inventory X needs to access reminders to inspect their sizes and other file attributes.\nNo data will be read.</string>
 	<key>NSSystemAdministrationUsageDescription</key>
-	<string>Disk Inventory X needs to access these files to inspect their sizes and other file attributes.</string>
+	<string>Disk Inventory X needs to access these files to inspect their sizes and other file attributes.\nNo data will be read.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Disk Inventory X needs to access these files to inspect their sizes and other file attributes.\nNo data will be read.</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>Disk Inventory X needs to access these files to inspect their sizes and other file attributes.\nNo data will be read.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>Disk Inventory X needs to access these files to inspect their sizes and other file attributes.\nNo data will be read.</string>
+	<key>NSNetworkVolumesUsageDescription</key>
+	<string>Disk Inventory X needs to access these files to inspect their sizes and other file attributes.\nNo data will be read.</string>
+	<key>NSRemovableVolumesUsageDescription</key>
+	<string>Disk Inventory X needs to access these files to inspect their sizes and other file attributes.\nNo data will be read.</string>
 	<key>OFControllerClass</key>
 	<string>AppController</string>
 	<key>OFRegistrations</key>

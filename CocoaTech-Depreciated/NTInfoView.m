@@ -215,7 +215,7 @@
                     && (version == nil || [version length] == 0);
                     i++)
                 {
-                    version = [bundleVersionInfos[0].dict objectForKey:bundleVersionInfos[0].key];
+                    version = [bundleVersionInfos[i].dict objectForKey:bundleVersionInfos[i].key];
                 }
                 
                 if (version && [version length])
