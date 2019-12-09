@@ -622,7 +622,8 @@
 	}
 	
 	//now we can do it
-	if ( [doc moveItemToTrash: selectedItem] )
+    NSError *error = nil;
+    if ( [doc moveItemToTrash: selectedItem error:&error] )
 	{
 		[[self class] poofEffectInView: view inRect: cellRect];
 		
@@ -632,7 +633,7 @@
 	{
 		//failed
         NSString *msg = [NSString stringWithFormat: NSLocalizedString(@"\"%@\" cannot be moved to the trash.",@""), [selectedItem displayName] ];
-        NSString *subMsg = NSLocalizedString( @"Maybe you do not have sufficient access privileges.", @"" );
+        NSString *subMsg = error.localizedFailureReason; //NSLocalizedString( @"Maybe you do not have sufficient access privileges.", @"" );
         
         NSBeginInformationalAlertSheet( msg,
                                        [NTLocalizedString localize:@"OK" table:@"CocoaTechBase"],

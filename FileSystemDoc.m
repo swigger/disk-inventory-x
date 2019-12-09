@@ -133,11 +133,9 @@ NSString *CollectFileKindStatisticsCanceledException = @"CollectFileKindStatisti
 - (void) addPackagesToFileKindStatistic: (FSItem*) item; 	
 - (void) removeEmptyKindStatistics;
 
-- (void) reserveColorsForLargestKinds;
+- (void)checkForProtectedFolders:(NSString * _Nonnull)folder;
 
-- (void) checkTrash: (FSItem*) trashItem
-withPreviousContent: (NSArray<NSURL*>*) oldContent
-			forItem: (FSItem*) itemTrashed;
+- (void) reserveColorsForLargestKinds;
 
 - (void) recalculateTotalSize;
 
@@ -225,41 +223,6 @@ NSString *OldItem = @"OldItem";
 {
     [super windowControllerDidLoadNib:aController];
     // Add any code here that needs to be executed once the windowController has loaded the document's window.
-}
-
-- (void)checkForProtectedFolders:(NSString * _Nonnull)folder
-{
-    NSFileManager *fileMgr = [NSFileManager defaultManager];
-    NSArray<NSURL*> *protectedFolders = [fileMgr privacyProtectedFoldersInURL:[NSURL fileURLWithPath:folder]];
-    if ( [protectedFolders count] > 0 )
-    {
-        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-        if ( ![defaults boolForVersionDependantKey: DontShowPrivacyWarningMessage] )
-        {
-            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-            
-            alert.alertStyle = NSAlertStyleInformational;
-            
-            alert.messageText = NSLocalizedString(@"Some folders which will be scanned contain private files. The access is protected by the macOS privacy protection.\n\nUpon first access macOS will ask whether you allow Disk Inventory X access to these folders and files.\n\nDisk Inventory X does not read any data - just information like file sizes and types is collected.", @"");
-            alert.informativeText = NSLocalizedString(@"You can change the access settings in the System Preferences (Security/Privacy).", @"");
-            
-            alert.showsSuppressionButton = YES;
-            alert.suppressionButton.title = NSLocalizedString(@"Do not show this information again.", @"");
-            
-            [alert runModal];
-            
-            if (alert.suppressionButton.state == NSOnState)
-            {
-                // Suppress this alert for the current version
-                [defaults setBool: YES forVersionDependantKey: DontShowPrivacyWarningMessage];
-            }
-            
-            // let the alert disappear before the consent dialogs pop up
-            [[NSRunLoop currentRunLoop] runUntilDate: [NSDate date]];
-        }
-        
-        [fileMgr triggerConsentDialogForPrivacyProtectedFolders:protectedFolders];
-    }
 }
 
 - (BOOL) readFromFile: (NSString *) folder ofType: (NSString *) docType
@@ -486,14 +449,15 @@ NSString *OldItem = @"OldItem";
     return _rootItem;
 }
 
-- (BOOL) moveItemToTrash: (FSItem*) item
+- (BOOL) moveItemToTrash: (FSItem*) item error:(NSError **)error
 {
 	NSParameterAssert( item != nil && item != [self zoomedItem] && ![item isSpecialItem] );
 	
-	//remember trash content so we can find the trashed item afterwards
-	NSArray<NSURL*> *prevTrashContents = nil;
-	FSItem *trashItem = nil;
-	
+	// file moved to trash (it's new URL)
+    NSURL *newFileInTrash = nil;
+    // FSItem representing the trash folder
+    FSItem *trashItem = nil;
+
 	//As the trash visible to the user only shows trashed files/folders on local volumes,
 	//we delete files/folders on network volumes (like the Finder does).
 	//If we would perform a NSWorkspaceRecycleOperation on a file/folder residing on a network volume,
@@ -501,34 +465,31 @@ NSString *OldItem = @"OldItem";
 	
 	if ( [[item fileURL] isLocalVolume] )
 	{
-        NSURL *trashURL = [[NSFileManager defaultManager] URLForDirectory:NSTrashDirectory inDomain:NSUserDomainMask appropriateForURL:[item fileURL] create:NO error:nil];
+        NSFileManager *fm = [NSFileManager defaultManager];
+        
+        NSURL *trashURL = [fm URLForDirectory:NSTrashDirectory inDomain:NSUserDomainMask appropriateForURL:[item fileURL] create:NO error:nil];
         
         if ( trashURL != nil )
             trashItem = [[self rootItem] findItemByAbsolutePath: [trashURL path] allowAncestors: NO];
-		
-		if ( trashItem != nil )
-            prevTrashContents = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:trashURL includingPropertiesForKeys:[NSArray array] options:0 error:nil];
         
-        
+        // move file/folder to trash
+        if ( ![fm trashItemAtURL:[item fileURL] resultingItemURL:&newFileInTrash error:error] )
+            return NO;
 	}
-	
-	//move file/folder to trash
-	NSArray *filesToTrash = [NSArray arrayWithObject: [item name]];
-	NSInteger tag = 0;
-	if ( ![[NSWorkspace sharedWorkspace] performFileOperation: ![[item fileURL] isLocalVolume] ? NSWorkspaceDestroyOperation : NSWorkspaceRecycleOperation
-													  source: [item folderName]
-												 destination: @""
-													   files: filesToTrash
-														 tag: &tag] )
-	{
-		return NO;
-	}
+	else
+    {
+        // delete file
+        if ( ![[NSFileManager defaultManager] removeItemAtURL:[item fileURL] error: error] )
+               return NO;
+    }
 	
 	//if the selected item should be removed, invalidate our selection
 	if ( [self selectedItem] == item )
 		[self setSelectedItem: nil];
+    
+    // keep data model in sync: remove from folder item, add to trash item, update file kind statistic
 	
-	//now remove the item from the parent's list
+	// remove the item from the parent's list
 	FSItem *parent = [item parent];
 	NSAssert( parent != nil, @"root item shouldn't be deletable" );
 	
@@ -543,9 +504,17 @@ NSString *OldItem = @"OldItem";
 	
 	//the users's trash may have been created with the trash operation (if item is not on the same volume as the user's home)
 	//in this case, we won't see the trashed item, as we are not showing the trash folder currently 
-	if ( trashItem != nil && prevTrashContents != nil )
-		[self checkTrash: trashItem withPreviousContent: prevTrashContents forItem: item];
+	if ( trashItem != nil && newFileInTrash != nil )
+    {
+        //keep the size of "itemTrashed", but associate with the valid URL
+        [item setFileURL: newFileInTrash];
 
+        [trashItem insertChild: item updateParent: YES];
+        
+        //keep kind statistic in sync
+        [self addItemToFileKindStatistic: item includingChilds: YES];
+    }
+    
 	//"checkTrash" may have editied the kind statistic, so notify observers but now
 	[self didChangeValueForKey: @"kindStatistics"];
 	
@@ -1150,48 +1119,39 @@ NSString *OldItem = @"OldItem";
 	[kinds release]; //mutableCopy returns a retained object (not autoreleased)
 }
 
-//After an item is moved to the trash, check if the visible part of the file system tree (all childs of the root)
-//contains the trash folder.
-//If this is the case, we need to add the trashed item to the FSItem representing the trash.
-//(the FSRef of the trashed item is unfortunately no longer valid and the Finder might have renamed it,
-//so we don't have any chance to get hold of the trashed item wit)
-- (void) checkTrash: (FSItem*) trashItem
-withPreviousContent: (NSArray<NSURL*>*) oldContent
-			forItem: (FSItem*) itemTrashed
+- (void)checkForProtectedFolders:(NSString * _Nonnull)folder
 {
-	//get current content of trash
- 	NSArray<NSURL*> *newContent = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:[trashItem fileURL] includingPropertiesForKeys:[NSArray array] options:0 error:nil];;
-	
-	//let's see which items are new in the trash	
-	//remove all items from "newContentIndex" which are also in "oldContent" and the new ones will remain
-	NSMutableDictionary *newContentIndex = [[newContent indexBySelector: @selector(name)] mutableCopy];
-	[newContentIndex autorelease]; //mutableCopy returns a retained object (not autoreleased)
-	
-	for ( NSURL *file in oldContent )
-		[newContentIndex removeObjectForKey: [file name]];
-	
-	//now look which of the new items might be "itemTrashed" (the Finder might have renamed it)
-	//first, direct name match
-	NSURL *trashedURL = [newContentIndex objectForKey: [itemTrashed name]];
-	//second try: look for an item starting with the name of the trashed one
-	if ( trashedURL == nil )
-	{
-		NSEnumerator *newContentEnum = [newContentIndex objectEnumerator];
-		while ( (trashedURL = [newContentEnum nextObject]) != nil && [[trashedURL name] hasPrefix: [itemTrashed name]] );
-	}
-	
-	//if the trashed item isn't found, we simply do nothing (okay, we could do a reload of "trashItem")
-	if ( trashedURL != nil )
-	{
-		//keep the size of "itemTrashed", but associate with the valid URL
-		[itemTrashed setFileURL: trashedURL];
-
-		[trashItem insertChild: itemTrashed updateParent: YES];
-		
-		//keep kind statistic in sync
-		[self addItemToFileKindStatistic: itemTrashed includingChilds: YES];
-	}
-		
+    NSFileManager *fileMgr = [NSFileManager defaultManager];
+    NSArray<NSURL*> *protectedFolders = [fileMgr privacyProtectedFoldersInURL:[NSURL fileURLWithPath:folder]];
+    if ( [protectedFolders count] > 0 )
+    {
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        if ( ![defaults boolForVersionDependantKey: DontShowPrivacyWarningMessage] )
+        {
+            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            
+            alert.alertStyle = NSAlertStyleInformational;
+            
+            alert.messageText = NSLocalizedString(@"Some folders which will be scanned contain private files. The access is protected by the macOS privacy protection.\n\nUpon first access macOS will ask whether you allow Disk Inventory X access to these folders and files.\n\nDisk Inventory X does not read any data - just information like file sizes and types are collected.", @"");
+            alert.informativeText = NSLocalizedString(@"You can change the access settings in the System Preferences (Security/Privacy).", @"");
+            
+            alert.showsSuppressionButton = YES;
+            alert.suppressionButton.title = NSLocalizedString(@"Do not show this information again.", @"");
+            
+            [alert runModal];
+            
+            if (alert.suppressionButton.state == NSOnState)
+            {
+                // Suppress this alert for the current version
+                [defaults setBool: YES forVersionDependantKey: DontShowPrivacyWarningMessage];
+            }
+            
+            // let the alert disappear before the consent dialogs pop up
+            [[NSRunLoop currentRunLoop] runUntilDate: [NSDate date]];
+        }
+        
+        [fileMgr triggerConsentDialogForPrivacyProtectedFolders:protectedFolders];
+    }
 }
 
 //@@test

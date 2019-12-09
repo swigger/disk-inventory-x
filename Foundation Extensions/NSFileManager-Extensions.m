@@ -15,7 +15,15 @@
 {
     NSMutableArray<NSURL*> *protectedURLs = [NSMutableArray array];
     
+    NSOperatingSystemVersion catalina = {10,15,0};
+    NSOperatingSystemVersion mojave = {10,14,0};
+    
+    // the protection of certain folders were added on 10.14 Mojave
+    if ( ![[NSProcessInfo processInfo] isOperatingSystemAtLeastVersion: mojave] )
+        return protectedURLs;
+
     // add folders which can be identified by a NSSearchPathDirectory constant directly
+    if ( [[NSProcessInfo processInfo] isOperatingSystemAtLeastVersion: catalina] )
     {
         NSSearchPathDirectory searchDirs[] = {NSDocumentDirectory,
                                                 NSDesktopDirectory,
@@ -54,7 +62,7 @@
                                                                  {
                                                                      // Handle the error.
                                                                      // Return YES if the enumeration should continue after the error.
-                                                                     NSLog(@"error: %@", error);
+                                                                     LOG(@"error: %@", error);
                                                                      return YES;
                                                                  }
                                             ];
@@ -83,10 +91,13 @@
             NSURL *url = [libUrl URLByAppendingPathComponent: @"Calendars"];
         
             [protectedURLs addObject: url];
+                
+            if ( [[NSProcessInfo processInfo] isOperatingSystemAtLeastVersion: catalina] )
+            {
+                url = [libUrl URLByAppendingPathComponent: @"Reminders"];
             
-            url = [libUrl URLByAppendingPathComponent: @"Reminders"];
-            
-            [protectedURLs addObject: url];
+                [protectedURLs addObject: url];
+            }
         }
 
     }

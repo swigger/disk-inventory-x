@@ -69,7 +69,7 @@
 
 - (FSItem*) rootItem;
 
-- (BOOL) moveItemToTrash: (FSItem*) item;//will post a "FSItemsChangedNotification"
+- (BOOL) moveItemToTrash: (FSItem*) item error:(NSError **)error;//will post a "FSItemsChangedNotification"
 - (void) refreshItem: (FSItem*) item;//will post a "FSItemsChangedNotification"
 
 - (FSItem*) zoomedItem;
