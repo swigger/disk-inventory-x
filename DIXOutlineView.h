@@ -6,7 +6,14 @@
 // (e.g. context menu support, drag&drop support)
 //
 //  Created by Tjark Derlien on 29.03.05.
-//  Copyright 2005 Tjark Derlien. All rights reserved.
+//
+//  Copyright (C) 2005 Tjark Derlien.
+//  
+//  This program is free software; you can redistribute it and/or
+//  modify it under the terms of the GNU General Public License
+//  as published by the Free Software Foundation; either version 3
+//  of the License, or any later version.
+
 //
 
 #import <Cocoa/Cocoa.h>

@@ -3,7 +3,15 @@
 //  Disk Accountant
 //
 //  Created by Tjark Derlien on Wed Oct 08 2003.
-//  Copyright (c) 2003 Tjark Derlien. All rights reserved.
+//
+//  Copyright (C) 2003 Tjark Derlien.
+//  
+//  This program is free software; you can redistribute it and/or
+//  modify it under the terms of the GNU General Public License
+//  as published by the Free Software Foundation; either version 3
+//  of the License, or any later version.
+//
+
 //
 
 

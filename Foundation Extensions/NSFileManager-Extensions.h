@@ -2,7 +2,14 @@
 //  NSFileManager-Extensions.h
 //  Disk Inventory X
 //
-//  Created by Doom on 08.11.19.
+//  Created by Tjark Derlien on 08.11.19.
+//
+//  Copyright (C) 2019 Tjark Derlien.
+//  
+//  This program is free software; you can redistribute it and/or
+//  modify it under the terms of the GNU General Public License
+//  as published by the Free Software Foundation; either version 3
+//  of the License, or any later version.
 //
 
 #import <Foundation/Foundation.h>
