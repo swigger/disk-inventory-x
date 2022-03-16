@@ -8,7 +8,6 @@
 
     #import <OmniBase/OmniBase.h>
 
-    #import <CocoaTechStrings/CocoaTechStrings.h>
 
 	//global variable which enables/disables logging
 	extern BOOL g_EnableLogging;

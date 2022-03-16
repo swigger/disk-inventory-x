@@ -44,9 +44,15 @@
 "Used" = "Used";
 "Free" = "Free";
 
+/* deleting items on network volumes*/
+"The item \"%@\" could not be moved to the trash." = "The item \"%@\" could not be moved to the trash.";
+"Would you like to delete it immediately?" = "Would you like to delete it immediately?";
+"No" = "No";
+"Yes" = "Yes";
+
 /*the "move to trash" command failed (the selected file/folder name will be placed in front of this text)*/
 "\"%@\" cannot be moved to the trash by Disk Inventory X." = "\"%@\" cannot be moved to the trash by Disk Inventory X.";
-"Maybe you do not have sufficient access privileges." = "Maybe you do not have sufficient access privileges.";
+"OK" = "OK";
 
 /*refreshing failed because the loaded folder doesn't exist anymore*/
 "\"%@\" does not exist any more." = "\"%@\" does not exist any more.";
@@ -70,3 +76,25 @@
 "Reinstall" = "Reinstall";
 "Update" = "Update";
 "Install" = "Install";
+
+/* file/folder properties in get info window */
+"Name:" = "Name:";
+"Kind:" = "Kind:";
+"URL:" = "URL:";
+"Modified:" = "Modified:";
+"Created:" = "Created:";
+"Size:" = "Size:";
+"Owner:" = "Owner:";
+"Group:" = "Group:";
+"Permission:" = "Permission:";
+"Version:" = "Version:";
+"Path:" = "Path:";
+"Resolved:" = "Resolved:";
+"Application:" = "Application:";
+"Volume:" = "Volume:";
+"Capacity:" = "Capacity:";
+"Free:" = "Free:";
+"Format:" = "Format:";
+"Mount Point:" = "Mount Point:";
+"Device:" = "Device:";
+" items" = " items";

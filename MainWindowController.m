@@ -237,19 +237,19 @@
 	//(only local items can be moved to trash)
 	if ( ![[selectedItem fileURL] isLocalVolume] )
 	{
-		NSString *msg = [NSString stringWithFormat: [NTLocalizedString localize: @"The item \"%@\" could not be moved to the trash."],
+		NSString *msg = [NSString stringWithFormat: NSLocalizedString(@"The item \"%@\" could not be moved to the trash.",@""),
 													[selectedItem displayName]];
 
 		NSBeginAlertSheet( msg,
-						  [NTLocalizedString localize: @"No"],
-						  [NTLocalizedString localize: @"Yes"],
+                          NSLocalizedString(@"No",@""),
+                          NSLocalizedString(@"Yes",@""),
 						  nil,
 						  [self window],
 						  self,
 						  nil,
 						  @selector(moveToTrashSheetDidDismiss: returnCode: contextInfo:),
 						  selectedItem,
-						  @"%@", [NTLocalizedString localize: @"Would you like to delete it immediately?"]);
+						  @"%@", NSLocalizedString(@"Would you like to delete it immediately?",@""));
 	}
 	else
 	{
@@ -640,11 +640,11 @@
 	else
 	{
 		//failed
-        NSString *msg = [NSString stringWithFormat: NSLocalizedString(@"\"%@\" cannot be moved to the trash.",@""), [selectedItem displayName] ];
+        NSString *msg = [NSString stringWithFormat: NSLocalizedString(@"\"%@\" cannot be moved to the trash by Disk Inventory X.",@""), [selectedItem displayName] ];
         NSString *subMsg = error.localizedFailureReason; //NSLocalizedString( @"Maybe you do not have sufficient access privileges.", @"" );
         
         NSBeginInformationalAlertSheet( msg,
-                                       [NTLocalizedString localize:@"OK" table:@"CocoaTechBase"],
+                                       NSLocalizedString(@"OK",@""),
                                        nil, nil,
                                        [self window],
                                        nil, NULL, NULL, nil,

@@ -567,7 +567,7 @@ NSString *OldItem = @"OldItem";
         NSString *subMsg = NSLocalizedString( @"The folder will remain visible in Disk Inventory X, but the files cannot be accessed (e.g. shown in the Finder).",@"");
         
         NSBeginInformationalAlertSheet( msg,
-                                       [NTLocalizedString localize:@"OK" table:@"CocoaTechBase"],
+                                       NSLocalizedString(@"OK",@""),
                                        nil, nil,
                                        [[[self windowControllers] objectAtIndex: 0] window],
                                        nil, NULL, NULL, nil,
@@ -613,7 +613,7 @@ NSString *OldItem = @"OldItem";
 		{
 			//error
             NSBeginInformationalAlertSheet( NSLocalizedString( @"The folder's content could not be loaded.", @""),
-                                           [NTLocalizedString localize:@"OK" table:@"CocoaTechBase"],
+                                           NSLocalizedString(@"OK",@""),
                                            nil, nil,
                                            [[[self windowControllers] objectAtIndex: 0] window],
                                            nil, NULL, NULL, nil,

@@ -21,6 +21,8 @@
 
 @interface SelectionListController(Privat)
 
+- (void) windowWillClose: (NSNotification*) notification;
+
 - (NSArray*) filterItems: (NSArray*) items;
 - (FSItemIndex*) currentIndexWithItems: (NSArray*) items;
 
@@ -34,7 +36,16 @@
 
 - (void) awakeFromNib
 {
-	[_kindsPopupController addObserver: self forKeyPath: @"arrangedObjects" options: 0 context: nil];
+    NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
+
+    [_kindsPopupController addObserver: self forKeyPath: @"arrangedObjects" options: 0 context: nil];
+
+    // register for window close event so we can remove ourself as observer from _kindsPopupController before it gets deallocated
+    [notificationCenter addObserver: self
+                           selector: @selector(windowWillClose:)
+                               name: NSWindowWillCloseNotification
+                             object: [_windowController window]];
+
 	
 	_indexToSearch = FSItemIndexAll;
 	
@@ -47,8 +58,6 @@
 {
 	[_serachString release];
 	[_indexes release];
-	
-	[_kindsPopupController removeObserver: self forKeyPath: @"arrangedObjects"];
 	
 	[super dealloc];
 }
@@ -267,6 +276,13 @@
 	LOG (@"perform search:  %.2f seconds", subtractTime( getTime(), startTime ) );
 	
 	return 	items;
+}
+
+- (void) windowWillClose: (NSNotification*) notification
+{
+    [_kindsPopupController removeObserver: self forKeyPath: @"arrangedObjects"];
+
+    [[NSNotificationCenter defaultCenter] removeObserver: self];
 }
 
 - (void) startProgressAnimation

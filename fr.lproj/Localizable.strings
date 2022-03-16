@@ -47,6 +47,13 @@
 /*the "move to trash" command failed (the selected file/folder name will be placed in front of this text)*/
 "\"%@\" cannot be moved to the trash by Disk Inventory X." = "\"%@\" ne peut pas être déplacé dans la corbeille par Disk Inventory X.";
 "Maybe you do not have sufficient access privileges." = "Vous n'avez peut-être pas des droits suffisants.";
+"OK" = "OK";
+
+/* deleting items on network volumes*/
+"The item \"%@\" could not be moved to the trash." = "L'élément \"%@\" n'a pas pu être déplacé vers la corbeille.";
+"Would you like to delete it immediately?" = "Souhaitez-vous le supprimer immédiatement?";
+"No" = "Non";
+"Yes" = "Oui";
 
 /*refreshing failed because the loaded folder doesn't exist anymore*/
 "\"%@\" does not exist any more." = "\"%@\" n'existe plus.";
@@ -71,3 +78,25 @@
 "You can change the access settings in the System Preferences (Security/Privacy)." = "Vous pouvez modifier les paramètres d'accès dans les Préférences Système (Sécurité/Confidentialité).";
 
 "Do not show this information again." = "Ne plus afficher ces informations.";
+
+/* file/folder properties in get info window */
+"Name:" = "Nom:";
+"Kind:" = "Type:";
+"URL:" = "URL:";
+"Modified:" = "Modifié:";
+"Created:" = "Créé:";
+"Size:" = "Taille:";
+"Owner:" = "Propriétaire:";
+"Group:" = "Groupe:";
+"Permission:" = "Autorisations:";
+"Version:" = "Version:";
+"Path:" = "Accès:";
+"Resolved:" = "Original:";
+"Application:" = "Application:";
+"Volume:" = "Volume:";
+"Capacity:" = "Capacité:";
+"Free:" = "Disponible:";
+"Format:" = "Format:";
+"Mount Point:" = "Point de montage:";
+"Device:" = "Volume BSD:";
+" items" = " éléments";
