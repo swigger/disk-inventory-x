@@ -1,0 +1,6 @@
+[submodule "OmniGroup"]
+	path = OmniGroup
+	url = https://github.com/swigger/OmniGroup.git
+[submodule "treemapview-framework"]
+	path = treemapview-framework
+	url = https://gitlab.com/tderlien/treemapview-framework.git
